@@ -1,0 +1,5 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Pirulín!</title><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#ffffff"><style>html,body{margin:0;height:100%;background:#fff}body{display:grid;place-items:center;font-family:system-ui,sans-serif;color:#6e737d}.loading{font-weight:700;font-size:14px}</style></head><body><div class="loading">Pirulín! ✨</div><script>
+const PARTS=['./parts/part-00.txt','./parts/part-01.txt','./parts/part-02.txt','./parts/part-03.txt','./parts/part-04.txt','./parts/part-05.txt','./parts/part-06.txt','./parts/part-07.txt','./parts/part-08.txt','./parts/part-09.txt','./parts/part-10.txt','./parts/part-11.txt','./parts/part-12.txt'];
+(async()=>{try{const chunks=await Promise.all(PARTS.map(p=>fetch(p,{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(p);return r.text()})));document.open();document.write(chunks.join(''));document.close();}catch(e){document.body.innerHTML='<div class="loading">No pude cargar Pirulín. Recargá la página.</div>';console.error(e)}})();
+</script></body></html>

@@ -35,7 +35,10 @@
           <meta name="apple-mobile-web-app-capable" content="yes">
           <meta name="apple-mobile-web-app-status-bar-style" content="default">
         `;
-        const appScripts = `<script type="module" src="./firebase-client.js"><\/script>`;
+        const appScripts = `
+          <script type="module" src="./firebase-client.js"><\/script>
+          <script type="module" src="./tasks-repository.js"><\/script>
+        `;
         html = html.replace('</head>', appHead + '</head>');
         html = html.replace('</body>', appScripts + '</body>');
 

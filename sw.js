@@ -1,4 +1,4 @@
-const CACHE = 'pirulin-pwa-v0.5.4-dev';
+const CACHE = 'pirulin-pwa-v0.5.5-dev';
 const CORE = [
   './',
   './index.html',

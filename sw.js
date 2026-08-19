@@ -1,10 +1,11 @@
-const CACHE = 'pirulin-pwa-v0.6.0-dev';
+const CACHE = 'pirulin-pwa-v0.7.0-dev';
 const CORE = [
   './',
   './index.html',
   './mockup_pirulin_v51.html',
   './firebase-client.js',
   './tasks-repository.js',
+  './tasks-preferences.js',
   './tasks-advanced.js',
   './tasks-live-adapter.js',
   './manifest.webmanifest',
@@ -28,7 +29,7 @@ self.addEventListener('activate', event => {
 
 function isCritical(url, request) {
   if (request.mode === 'navigate') return true;
-  return /\/(?:index\.html|mockup_pirulin_v51\.html|firebase-client\.js|tasks-repository\.js|tasks-advanced\.js|tasks-live-adapter\.js)$/.test(url.pathname);
+  return /\/(?:index\.html|mockup_pirulin_v51\.html|firebase-client\.js|tasks-repository\.js|tasks-preferences\.js|tasks-advanced\.js|tasks-live-adapter\.js)$/.test(url.pathname);
 }
 
 self.addEventListener('fetch', event => {

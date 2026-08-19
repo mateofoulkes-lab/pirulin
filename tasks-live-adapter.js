@@ -194,7 +194,8 @@ function installTaskHooks(){
 function startLiveTasks(){
   if (!window.PirulinTasks || !window.PirulinFirebase?.user || !rootListsReady()) return false;
   if (stopTasksSubscription) stopTasksSubscription();
-  clearLiveLists();
+  // Importante: no vaciamos el mock hasta recibir la primera respuesta válida de Firestore.
+  // Si hay un error de permisos/red, la interfaz sigue utilizable en vez de quedar vacía.
   stopTasksSubscription=window.PirulinTasks.subscribeTasks({
     onChange:renderTasks,
     onError:error=>{console.error("Pirulín task sync",error);notify("Error sincronizando tareas")}
@@ -208,9 +209,9 @@ function tryBoot(){
   setTimeout(tryBoot,120);
 }
 window.addEventListener("pirulin-auth-changed",event=>{
-  if (event.detail?.signedIn) tryBoot();
+  if (event.detail?.signedIn) setTimeout(tryBoot,0);
   else if (stopTasksSubscription){stopTasksSubscription();stopTasksSubscription=null;booted=false;}
 });
-if (window.PirulinFirebase?.user) tryBoot(); else setTimeout(tryBoot,200);
+if (window.PirulinFirebase?.user) setTimeout(tryBoot,0);
 
 window.PirulinTaskLive = { renderTasks, startLiveTasks };

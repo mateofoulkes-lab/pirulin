@@ -4,6 +4,7 @@ let rolloverRunning = false;
 let lastModalMode = null;
 
 function q(sel, root=document){ return root.querySelector(sel); }
+function qa(sel, root=document){ return [...root.querySelectorAll(sel)]; }
 function localISO(d=new Date()){
   const y=d.getFullYear();
   const m=String(d.getMonth()+1).padStart(2,'0');
@@ -19,13 +20,17 @@ function addDaysISO(iso, days){
   date.setDate(date.getDate()+days);
   return localISO(date);
 }
+function dateFromISO(iso){
+  if(!iso) return new Date();
+  const [y,m,d]=iso.split('-').map(Number);
+  return new Date(y,m-1,d);
+}
 function nextRepeatDate(task){
   const repeat=task?.repeat||{type:'none',days:[]};
   const base=task?.date||localISO();
   if(repeat.type==='weekly'){
     const selected=(Array.isArray(repeat.days)?repeat.days:[]).map(Number).filter(Number.isFinite);
-    const [y,m,d]=base.split('-').map(Number);
-    const date=new Date(y,m-1,d);
+    const date=dateFromISO(base);
     for(let i=1;i<=14;i++){
       const probe=new Date(date); probe.setDate(date.getDate()+i);
       if(!selected.length || selected.includes(probe.getDay())) return localISO(probe);
@@ -50,7 +55,7 @@ function nextRepeatDate(task){
 }
 function currentTaskFromActive(){
   const active=window.activeTask;
-  const root=active?.classList?.contains('nested-task') ? active.closest('.task') : active;
+  const root=active?.classList?.contains('nested-task') ? document.querySelector(`.task[data-firebase-id="${CSS.escape(active.dataset.treeRoot||'')}"]`) : active;
   const id=root?.dataset?.firebaseId;
   return id ? window.PirulinTaskLive?.tasks?.find?.(t=>t.id===id) || null : null;
 }
@@ -78,6 +83,23 @@ function ensureAdvancedFields(){
     </label>`;
   anchor.parentNode.insertBefore(wrap,anchor);
 }
+function syncOriginalModalFields(task){
+  if(!task) return;
+  const hasDate=!!task.date;
+  try{
+    window.eval(`taskHasDate=${hasDate}; repeatType=${JSON.stringify(task.repeat?.type||'none')}; selectedTaskDate=new Date(${JSON.stringify(task.date||localISO())}+'T12:00:00'); miniCursor=new Date(selectedTaskDate.getFullYear(),selectedTaskDate.getMonth(),1); if(typeof renderMiniCalendar==='function')renderMiniCalendar(); if(typeof updateChosenDateLabel==='function')updateChosenDateLabel();`);
+  }catch{}
+  q('#withDateBtn')?.classList.toggle('active',hasDate);
+  q('#noDateBtn')?.classList.toggle('active',!hasDate);
+  if(q('#noDateInline')) q('#noDateInline').checked=!hasDate;
+  if(q('#datePickerWrap')) q('#datePickerWrap').style.display=hasDate?'block':'none';
+  if(q('#noDateNote')) q('#noDateNote').style.display=hasDate?'none':'block';
+  qa('.repeat-type').forEach(b=>b.classList.toggle('active',b.dataset.repeat===(task.repeat?.type||'none')));
+  if(q('#weeklyPanel')) q('#weeklyPanel').classList.toggle('show',task.repeat?.type==='weekly');
+  const days=new Set((task.repeat?.days||[]).map(Number));
+  qa('.weekday').forEach(b=>b.classList.toggle('active',days.has(Number(b.dataset.day))));
+  if(q('#persistentInput')) q('#persistentInput').checked=!!task.persistent;
+}
 function populateAdvancedFields(){
   ensureAdvancedFields();
   const mode=safeEval('modalMode','new');
@@ -90,6 +112,7 @@ function populateAdvancedFields(){
     const task=currentTaskFromActive();
     time.value=task?.time||'';
     reminder.value=String(Number.isFinite(Number(task?.reminderMinutes)) ? Number(task.reminderMinutes) : DEFAULT_REMINDER_MINUTES);
+    syncOriginalModalFields(task);
   }else{
     time.value='';
     reminder.value=String(DEFAULT_REMINDER_MINUTES);
@@ -124,7 +147,6 @@ async function renewRecurringTask(task){
   if(!nextDate) return;
   const save=window.PirulinTasks?.__originalSaveTask || window.PirulinTasks?.saveTask;
   if(!save) return;
-  // Deja que la celebración de completado sea visible antes de renovar el mismo objeto.
   setTimeout(()=>save({...task,date:nextDate,completed:false}).catch(console.error),700);
 }
 async function rolloverPersistentTasks(){
@@ -135,11 +157,32 @@ async function rolloverPersistentTasks(){
   const today=localISO();
   try{
     const pending=tasks.filter(t=>t.persistent && !t.completed && t.date && t.date<today);
-    for(const task of pending){
-      await window.PirulinTasks.saveTask({...task,date:today});
-    }
+    for(const task of pending) await window.PirulinTasks.saveTask({...task,date:today});
   }catch(err){ console.error('Pirulín persistent rollover',err); }
   finally{ rolloverRunning=false; }
+}
+function decorateTaskCards(){
+  const tasks=window.PirulinTaskLive?.tasks;
+  if(!Array.isArray(tasks)) return;
+  qa('.task[data-firebase-id]').forEach(card=>{
+    const task=tasks.find(t=>t.id===card.dataset.firebaseId);
+    if(!task) return;
+    const text=q('.task-text',card);
+    if(!text) return;
+    let meta=q('.pirulin-task-meta',text);
+    const bits=[];
+    if(task.time) bits.push(`⏱ ${task.time}`);
+    if(task.repeat?.type && task.repeat.type!=='none') bits.push({weekly:'Semanal',monthly:'Mensual',yearly:'Anual'}[task.repeat.type]||'Repite');
+    if(task.persistent && !task.completed) bits.push('Persistente');
+    if(!bits.length){ meta?.remove(); return; }
+    if(!meta){
+      meta=document.createElement('span');
+      meta.className='pirulin-task-meta';
+      meta.style.cssText='display:block;margin-top:4px;font-family:Nunito,system-ui,sans-serif;font-size:10.5px;font-weight:800;color:#9299a8;letter-spacing:0;text-decoration:none';
+      text.appendChild(meta);
+    }
+    meta.textContent=bits.join(' · ');
+  });
 }
 function installHooks(){
   ensureAdvancedFields();
@@ -151,10 +194,7 @@ function installHooks(){
       ensureAdvancedFields();
       const time=q('#pirulinTimeInput')?.value||null;
       const reminderRaw=Number(q('#pirulinReminderInput')?.value ?? DEFAULT_REMINDER_MINUTES);
-      pendingSaveExtras={
-        time:time||null,
-        reminderMinutes:time && Number.isFinite(reminderRaw) && reminderRaw>=0 ? reminderRaw : null
-      };
+      pendingSaveExtras={time:time||null,reminderMinutes:time && Number.isFinite(reminderRaw) && reminderRaw>=0 ? reminderRaw : null};
       return;
     }
 
@@ -171,9 +211,7 @@ function installHooks(){
       }
     }
 
-    if(event.target.closest?.('.more,[data-act="edit"],#fab,.fab')){
-      setTimeout(()=>{ lastModalMode=null; populateAdvancedFields(); },20);
-    }
+    if(event.target.closest?.('.more,[data-act="edit"],#fab,.fab')) setTimeout(()=>{ lastModalMode=null; populateAdvancedFields(); },20);
   },true);
 
   const modal=q('#taskModal');
@@ -187,17 +225,15 @@ function installHooks(){
     lockRealIdentity();
     if(!window.PirulinTasks?.__advancedWrapped) installRepositoryWrapper();
     rolloverPersistentTasks();
-  },1500);
+    decorateTaskCards();
+  },1000);
 }
-
 function boot(){
   if(!q('#taskModal') || !window.PirulinFirebase) return setTimeout(boot,120);
   installHooks();
 }
-
 window.addEventListener('pirulin-auth-changed',event=>{
   if(event.detail?.signedIn) setTimeout(()=>{lockRealIdentity();rolloverPersistentTasks();},100);
 });
 boot();
-
 window.PirulinTaskAdvanced={nextRepeatDate,rolloverPersistentTasks};

@@ -41,7 +41,9 @@ const state = {
   db,
   user: null,
   person: null,
-  ready: false
+  ready: false,
+  mockLoginHandler: null,
+  mockTransitionDone: false
 };
 
 window.PirulinFirebase = state;
@@ -76,21 +78,37 @@ function setLoginStatus(message, isError = false) {
 function setMockCurrentUser(person) {
   if (!person) return;
   try {
-    // The approved v51 mockup keeps currentUser in its classic-script global lexical scope.
-    // We only ever inject one of the two hard-coded allowed display names.
     window.eval(`currentUser=${JSON.stringify(person)}; if(typeof updateUserUI==='function') updateUserUI();`);
   } catch (error) {
     console.warn("Pirulín: no pude sincronizar currentUser del mockup todavía", error);
   }
 }
 
-function showApp(user, person) {
-  const { login } = loginElements();
+function runOriginalV51LoginTransition() {
+  if (state.mockTransitionDone) return;
+  state.mockTransitionDone = true;
+
+  const { button, login } = loginElements();
+  try {
+    if (typeof state.mockLoginHandler === "function") {
+      const fakeEvent = new MouseEvent("click", { bubbles: false, cancelable: true, view: window });
+      state.mockLoginHandler.call(button, fakeEvent);
+      return;
+    }
+  } catch (error) {
+    console.error("Pirulín: falló la transición original v51", error);
+  }
+
+  // Fallback: nunca dejar la pantalla de login tapando la app.
   if (login) login.classList.add("hidden");
+}
+
+function showApp(user, person) {
   state.user = user;
   state.person = person;
   state.ready = true;
   setMockCurrentUser(person);
+  runOriginalV51LoginTransition();
   window.dispatchEvent(new CustomEvent("pirulin-auth-changed", {
     detail: { signedIn: true, uid: user.uid, email: user.email, person }
   }));
@@ -98,6 +116,7 @@ function showApp(user, person) {
 
 function showLogin(message = "") {
   const { login } = loginElements();
+  state.mockTransitionDone = false;
   if (login) login.classList.remove("hidden");
   state.user = null;
   state.person = null;
@@ -149,7 +168,10 @@ function installLoginHook() {
   if (!button || button.dataset.firebaseHooked === "1") return;
   button.dataset.firebaseHooked = "1";
 
-  // Capture phase prevents the mockup's simulated login handler from firing.
+  // Guardamos la transición aprobada del mockup y evitamos que se ejecute antes de autenticar.
+  state.mockLoginHandler = typeof button.onclick === "function" ? button.onclick : null;
+  if (state.mockLoginHandler) button.onclick = null;
+
   button.addEventListener("click", event => {
     event.preventDefault();
     event.stopImmediatePropagation();

@@ -2,6 +2,7 @@ const ROOT_LISTS = ["todayPending","todayDone","allList","sharedList"];
 let stopTasksSubscription = null;
 let latestTasks = new Map();
 let booted = false;
+let firstSnapshotReceived = false;
 
 function q(sel, root=document){ return root.querySelector(sel); }
 function qa(sel, root=document){ return [...root.querySelectorAll(sel)]; }
@@ -37,6 +38,11 @@ function setVisualCategory(card, name){
   if (name && typeof window.setTaskCategory === "function") {
     try { window.setTaskCategory(card,name); } catch {}
   }
+}
+function taskFromElement(el){
+  const root = currentRootTask(el);
+  const id = root?.dataset?.firebaseId;
+  return id ? latestTasks.get(id) || null : null;
 }
 function makeCard(task){
   const card=document.createElement("div");
@@ -79,14 +85,15 @@ function makeCard(task){
     try { window.wireTask(card); } catch (err) { console.warn("wireTask",err); }
   }
 
+  // wireTask hace primero la animación/movimiento visual. Guardamos el estado resultante.
   check.addEventListener("click",()=>{
     setTimeout(async()=>{
       const current=latestTasks.get(task.id);
       if (!current) return;
-      const completed=card.classList.contains("done");
+      const completed=card.classList.contains("done") || check.classList.contains("done");
       try { await window.PirulinTasks.saveTask({...current,completed}); }
       catch(err){ console.error(err); notify("No pude guardar el cambio"); }
-    },0);
+    },30);
   });
   return card;
 }
@@ -104,6 +111,7 @@ function renderTasks(tasks){
     if (task.shared) appendCard("sharedList",task);
     if (task.date===today) appendCard(task.completed?"todayDone":"todayPending",task);
   });
+  firstSnapshotReceived=true;
   try { if (typeof window.applyAllFilters === "function") window.applyAllFilters(); } catch {}
   try { if (typeof window.refreshCalendars === "function") window.refreshCalendars(); } catch {}
 }
@@ -146,9 +154,11 @@ async function saveFromModal(mode, activeBefore, draft){
       const old=latestTasks.get(id);
       if (!old) return;
       if (!!old.shared !== !!draft.shared) {
-        await window.PirulinTasks.moveTaskBetweenScopes(old,draft.shared);
+        const moved=await window.PirulinTasks.moveTaskBetweenScopes(old,draft.shared);
+        await window.PirulinTasks.saveTask({...moved,...draft,id,shared:draft.shared});
+      } else {
+        await window.PirulinTasks.saveTask({...old,...draft,id});
       }
-      await window.PirulinTasks.saveTask({...old,...draft,id,shared:draft.shared});
       return;
     }
     if (mode==="add-subtask") {
@@ -156,12 +166,29 @@ async function saveFromModal(mode, activeBefore, draft){
       const id=root?.dataset?.firebaseId;
       const old=id?latestTasks.get(id):null;
       if (!old) return;
-      await window.PirulinTasks.saveTask({...old,subtasks:parseSubtasks(root)});
+      // Dejamos que la v51 agregue el nodo y tomamos el árbol resultante inmediatamente después.
+      setTimeout(()=>{
+        const updatedRoot=document.querySelector(`.task[data-firebase-id="${CSS.escape(id)}"]`) || root;
+        window.PirulinTasks.saveTask({...old,subtasks:parseSubtasks(updatedRoot)}).catch(err=>console.error("subtask sync",err));
+      },20);
     }
   } catch(err){
     console.error("Pirulín task save",err);
     notify("No pude guardar la tarea");
   }
+}
+async function toggleShareFromMenu(active){
+  const task=taskFromElement(active);
+  if (!task) return false;
+  const nextShared=!task.shared;
+  try {
+    await window.PirulinTasks.moveTaskBetweenScopes(task,nextShared);
+    notify(nextShared ? `Compartida con ${window.PirulinFirebase?.person==="Mateo"?"Dani":"Mateo"} 🔔` : "Tarea privada");
+  } catch(err){
+    console.error("Pirulín share",err);
+    notify("No pude cambiar el estado compartido");
+  }
+  return true;
 }
 function installTaskHooks(){
   if (document.documentElement.dataset.pirulinTaskHooks==="1") return;
@@ -177,25 +204,34 @@ function installTaskHooks(){
       return;
     }
 
-    const menuDelete=event.target.closest?.('#taskMenu [data-act="delete"]');
-    if (menuDelete) {
-      const active=window.activeTask;
-      const id=active?.dataset?.firebaseId;
-      const task=id?latestTasks.get(id):null;
-      if (!task) return;
+    const menuButton=event.target.closest?.("#taskMenu button[data-act]");
+    if (!menuButton) return;
+    const action=menuButton.dataset.act;
+    const active=window.activeTask;
+    const task=taskFromElement(active);
+
+    if (action==="delete" && task) {
       event.preventDefault();
       event.stopImmediatePropagation();
       q("#taskMenu")?.classList.remove("show");
       if (!window.confirm("¿Eliminar esta tarea?")) return;
       window.PirulinTasks.deleteTask(task).catch(err=>{console.error(err);notify("No pude eliminar la tarea")});
+      return;
+    }
+
+    if (action==="share" && task) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      q("#taskMenu")?.classList.remove("show");
+      toggleShareFromMenu(active);
     }
   },true);
 }
 function startLiveTasks(){
   if (!window.PirulinTasks || !window.PirulinFirebase?.user || !rootListsReady()) return false;
   if (stopTasksSubscription) stopTasksSubscription();
-  // Importante: no vaciamos el mock hasta recibir la primera respuesta válida de Firestore.
-  // Si hay un error de permisos/red, la interfaz sigue utilizable en vez de quedar vacía.
+  firstSnapshotReceived=false;
+  // No vaciamos el mock hasta recibir una respuesta válida de Firestore.
   stopTasksSubscription=window.PirulinTasks.subscribeTasks({
     onChange:renderTasks,
     onError:error=>{console.error("Pirulín task sync",error);notify("Error sincronizando tareas")}
@@ -210,8 +246,8 @@ function tryBoot(){
 }
 window.addEventListener("pirulin-auth-changed",event=>{
   if (event.detail?.signedIn) setTimeout(tryBoot,0);
-  else if (stopTasksSubscription){stopTasksSubscription();stopTasksSubscription=null;booted=false;}
+  else if (stopTasksSubscription){stopTasksSubscription();stopTasksSubscription=null;booted=false;firstSnapshotReceived=false;}
 });
 if (window.PirulinFirebase?.user) setTimeout(tryBoot,0);
 
-window.PirulinTaskLive = { renderTasks, startLiveTasks };
+window.PirulinTaskLive = { renderTasks, startLiveTasks, get tasks(){ return [...latestTasks.values()]; } };

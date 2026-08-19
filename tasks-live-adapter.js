@@ -3,6 +3,7 @@ let stopTasksSubscription = null;
 let latestTasks = new Map();
 let booted = false;
 let firstSnapshotReceived = false;
+let reorderContext = null;
 
 function q(sel, root=document){ return root.querySelector(sel); }
 function qa(sel, root=document){ return [...root.querySelectorAll(sel)]; }
@@ -39,10 +40,56 @@ function setVisualCategory(card, name){
     try { window.setTaskCategory(card,name); } catch {}
   }
 }
+function currentRootTask(el){
+  if (!el) return null;
+  if (!el.classList.contains("nested-task")) return el;
+  if (typeof window.rootTaskFor === "function") {
+    try { return window.rootTaskFor(el); } catch {}
+  }
+  const id=el.dataset.treeRoot;
+  return id?document.querySelector(`.task[data-id="${CSS.escape(id)}"]`):null;
+}
 function taskFromElement(el){
   const root = currentRootTask(el);
   const id = root?.dataset?.firebaseId;
   return id ? latestTasks.get(id) || null : null;
+}
+function parseSubtasks(card){
+  try { return JSON.parse(card?.dataset?.subtasks||"[]"); } catch { return []; }
+}
+async function persistTreeFromElement(el){
+  const root=currentRootTask(el);
+  const id=root?.dataset?.firebaseId;
+  const old=id?latestTasks.get(id):null;
+  if (!root || !old) return;
+  const completed=root.classList.contains("done");
+  try {
+    await window.PirulinTasks.saveTask({...old,completed,subtasks:parseSubtasks(root)});
+  } catch(err){
+    console.error("Pirulín subtask sync",err);
+    notify("No pude guardar las subtareas");
+  }
+}
+function syncCalendarSource(tasks){
+  const grouped={};
+  tasks.forEach(task=>{
+    if (!task.date) return;
+    if (!grouped[task.date]) grouped[task.date]=[];
+    grouped[task.date].push({
+      id:task.id,
+      text:task.title,
+      shared:!!task.shared,
+      by:task.createdBy||null,
+      category:task.categoryName||task.categoryId||"Personal",
+      completed:!!task.completed
+    });
+  });
+  try {
+    const json=JSON.stringify(grouped).replace(/</g,"\\u003c");
+    window.eval(`(()=>{const data=${json};Object.keys(mockCalendarTasks).forEach(k=>delete mockCalendarTasks[k]);Object.assign(mockCalendarTasks,data);if(typeof renderCalendar==='function')renderCalendar();if(typeof calendarDetailOpen!=='undefined'&&calendarDetailOpen&&typeof renderCalendarDay==='function')renderCalendarDay();})()`);
+  } catch(err){
+    console.warn("Pirulín calendar sync",err);
+  }
 }
 function makeCard(task){
   const card=document.createElement("div");
@@ -85,13 +132,12 @@ function makeCard(task){
     try { window.wireTask(card); } catch (err) { console.warn("wireTask",err); }
   }
 
-  // wireTask hace primero la animación/movimiento visual. Guardamos el estado resultante.
   check.addEventListener("click",()=>{
     setTimeout(async()=>{
       const current=latestTasks.get(task.id);
       if (!current) return;
       const completed=card.classList.contains("done") || check.classList.contains("done");
-      try { await window.PirulinTasks.saveTask({...current,completed}); }
+      try { await window.PirulinTasks.saveTask({...current,completed,subtasks:parseSubtasks(card)}); }
       catch(err){ console.error(err); notify("No pude guardar el cambio"); }
     },30);
   });
@@ -112,20 +158,8 @@ function renderTasks(tasks){
     if (task.date===today) appendCard(task.completed?"todayDone":"todayPending",task);
   });
   firstSnapshotReceived=true;
+  syncCalendarSource(tasks);
   try { if (typeof window.applyAllFilters === "function") window.applyAllFilters(); } catch {}
-  try { if (typeof window.refreshCalendars === "function") window.refreshCalendars(); } catch {}
-}
-function currentRootTask(el){
-  if (!el) return null;
-  if (!el.classList.contains("nested-task")) return el;
-  if (typeof window.rootTaskFor === "function") {
-    try { return window.rootTaskFor(el); } catch {}
-  }
-  const id=el.dataset.treeRoot;
-  return id?document.querySelector(`.task[data-id="${CSS.escape(id)}"]`):null;
-}
-function parseSubtasks(card){
-  try { return JSON.parse(card?.dataset?.subtasks||"[]"); } catch { return []; }
 }
 function formDraft(){
   const title=q("#taskInput")?.value?.trim()||"";
@@ -149,6 +183,10 @@ async function saveFromModal(mode, activeBefore, draft){
       await window.PirulinTasks.saveTask({...draft,order,completed:false});
       return;
     }
+    if (mode==="edit" && activeBefore?.classList?.contains("nested-task")) {
+      setTimeout(()=>persistTreeFromElement(activeBefore),30);
+      return;
+    }
     if (mode==="edit" && activeBefore?.dataset?.firebaseId) {
       const id=activeBefore.dataset.firebaseId;
       const old=latestTasks.get(id);
@@ -162,15 +200,7 @@ async function saveFromModal(mode, activeBefore, draft){
       return;
     }
     if (mode==="add-subtask") {
-      const root=currentRootTask(activeBefore);
-      const id=root?.dataset?.firebaseId;
-      const old=id?latestTasks.get(id):null;
-      if (!old) return;
-      // Dejamos que la v51 agregue el nodo y tomamos el árbol resultante inmediatamente después.
-      setTimeout(()=>{
-        const updatedRoot=document.querySelector(`.task[data-firebase-id="${CSS.escape(id)}"]`) || root;
-        window.PirulinTasks.saveTask({...old,subtasks:parseSubtasks(updatedRoot)}).catch(err=>console.error("subtask sync",err));
-      },20);
+      setTimeout(()=>persistTreeFromElement(activeBefore),30);
     }
   } catch(err){
     console.error("Pirulín task save",err);
@@ -190,11 +220,58 @@ async function toggleShareFromMenu(active){
   }
   return true;
 }
+function rememberReorderStart(event){
+  const more=event.target.closest?.(".more");
+  if (!more) return;
+  const card=more.closest(".task");
+  if (!card || card.classList.contains("nested-task") || !card.dataset.firebaseId) return;
+  const list=card.closest(".task-list");
+  if (!list) return;
+  reorderContext={list,id:card.dataset.firebaseId};
+}
+async function persistOrderFromList(list){
+  if (!list) return;
+  const visibleIds=qa(":scope > .task[data-firebase-id]",list).map(el=>el.dataset.firebaseId).filter(id=>latestTasks.has(id));
+  if (visibleIds.length<2) return;
+  const visibleSet=new Set(visibleIds);
+  const base=[...latestTasks.values()].sort((a,b)=>(Number(a.order)||0)-(Number(b.order)||0));
+  const slots=[];
+  base.forEach((task,index)=>{ if(visibleSet.has(task.id)) slots.push(index); });
+  if (slots.length!==visibleIds.length) return;
+  const reordered=[...base];
+  slots.forEach((slot,index)=>{ reordered[slot]=latestTasks.get(visibleIds[index]); });
+  const changed=reordered.filter((task,index)=>(Number(task.order)||0)!==index);
+  if (!changed.length) return;
+  try {
+    await Promise.all(changed.map(task=>window.PirulinTasks.saveTask({...task,order:reordered.indexOf(task)})));
+  } catch(err){
+    console.error("Pirulín reorder",err);
+    notify("No pude guardar el orden");
+  }
+}
+function finishReorder(){
+  const ctx=reorderContext;
+  reorderContext=null;
+  if (!ctx) return;
+  setTimeout(()=>persistOrderFromList(ctx.list),40);
+}
 function installTaskHooks(){
   if (document.documentElement.dataset.pirulinTaskHooks==="1") return;
   document.documentElement.dataset.pirulinTaskHooks="1";
 
+  document.addEventListener("mousedown",rememberReorderStart,true);
+  document.addEventListener("touchstart",rememberReorderStart,{capture:true,passive:true});
+  document.addEventListener("mouseup",finishReorder);
+  document.addEventListener("touchend",finishReorder);
+
   document.addEventListener("click",event=>{
+    const nestedCheck=event.target.closest?.(".nested-task .check");
+    if (nestedCheck) {
+      const nested=nestedCheck.closest(".nested-task");
+      setTimeout(()=>persistTreeFromElement(nested),35);
+      return;
+    }
+
     const save=event.target.closest?.("#saveModal");
     if (save) {
       const mode=safeEval("modalMode","new");
@@ -209,8 +286,9 @@ function installTaskHooks(){
     const action=menuButton.dataset.act;
     const active=window.activeTask;
     const task=taskFromElement(active);
+    const isNested=!!active?.classList?.contains("nested-task");
 
-    if (action==="delete" && task) {
+    if (action==="delete" && task && !isNested) {
       event.preventDefault();
       event.stopImmediatePropagation();
       q("#taskMenu")?.classList.remove("show");
@@ -219,7 +297,17 @@ function installTaskHooks(){
       return;
     }
 
-    if (action==="share" && task) {
+    if (action==="delete" && task && isNested) {
+      setTimeout(()=>persistTreeFromElement(active),35);
+      return;
+    }
+
+    if (action==="complete-all" && task) {
+      setTimeout(()=>persistTreeFromElement(active),35);
+      return;
+    }
+
+    if (action==="share" && task && !isNested) {
       event.preventDefault();
       event.stopImmediatePropagation();
       q("#taskMenu")?.classList.remove("show");
@@ -231,7 +319,6 @@ function startLiveTasks(){
   if (!window.PirulinTasks || !window.PirulinFirebase?.user || !rootListsReady()) return false;
   if (stopTasksSubscription) stopTasksSubscription();
   firstSnapshotReceived=false;
-  // No vaciamos el mock hasta recibir una respuesta válida de Firestore.
   stopTasksSubscription=window.PirulinTasks.subscribeTasks({
     onChange:renderTasks,
     onError:error=>{console.error("Pirulín task sync",error);notify("Error sincronizando tareas")}

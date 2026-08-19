@@ -1,4 +1,4 @@
-const CACHE = 'pirulin-pwa-v51-4';
+const CACHE = 'pirulin-pwa-v0.5.0-dev';
 const CORE = [
   './',
   './index.html',
@@ -24,6 +24,11 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+function isCritical(url, request) {
+  if (request.mode === 'navigate') return true;
+  return /\/(?:index\.html|mockup_pirulin_v51\.html|firebase-client\.js|tasks-repository\.js)$/.test(url.pathname);
+}
+
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
@@ -34,9 +39,9 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      const network = fetch(event.request)
+  if (isCritical(url, event.request)) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
         .then(response => {
           if (response && response.ok) {
             const copy = response.clone();
@@ -44,9 +49,18 @@ self.addEventListener('fetch', event => {
           }
           return response;
         })
-        .catch(() => cached || caches.match('./index.html'));
+        .catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
+    );
+    return;
+  }
 
-      return cached || network;
-    })
+  event.respondWith(
+    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+      if (response && response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache => cache.put(event.request, copy));
+      }
+      return response;
+    }))
   );
 });

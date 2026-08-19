@@ -18,7 +18,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.5.5-dev';
+    const PIRULIN_VERSION = '0.5.6-dev';
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
@@ -38,7 +38,9 @@
           .replace('let miniCursor = new Date(2026,7,1);', 'let miniCursor = new Date(new Date().getFullYear(),new Date().getMonth(),1);')
           .replaceAll('new Date(2026,7,18)', 'new Date()')
           .replace('const TODAY_ISO = "2026-08-18";', 'const TODAY_ISO = isoLocal(new Date());')
-          .replace('if(taskHasDate && isoLocal(selectedTaskDate)==="2026-08-18"){', 'if(taskHasDate && isoLocal(selectedTaskDate)===TODAY_ISO){');
+          .replace('if(taskHasDate && isoLocal(selectedTaskDate)==="2026-08-18"){', 'if(taskHasDate && isoLocal(selectedTaskDate)===TODAY_ISO){')
+          .replace('if(dx>92)moveTaskToLater(task);', 'if(dx>92){ if(window.PirulinTaskSwipePostpone) window.PirulinTaskSwipePostpone(task); else moveTaskToLater(task); }')
+          .replace('if(dx<-92)deleteTaskWithConfirm(task);', 'if(dx<-92){ if(window.PirulinTaskSwipeDelete) window.PirulinTaskSwipeDelete(task); else deleteTaskWithConfirm(task); }');
 
         const appHead = `
           <link rel="manifest" href="./manifest.webmanifest">

@@ -1,7 +1,10 @@
-const DEFAULT_REMINDER_MINUTES = 15;
+let DEFAULT_REMINDER_MINUTES = 15;
 let pendingSaveExtras = null;
 let rolloverRunning = false;
 let lastModalMode = null;
+let stopCategories = null;
+let stopSettings = null;
+let categoryBooted = false;
 
 function q(sel, root=document){ return root.querySelector(sel); }
 function qa(sel, root=document){ return [...root.querySelectorAll(sel)]; }
@@ -76,12 +79,18 @@ function ensureAdvancedFields(){
         <option value="-1">Sin aviso</option>
         <option value="0">A la hora</option>
         <option value="5">5 min antes</option>
-        <option value="15" selected>15 min antes</option>
+        <option value="15">15 min antes</option>
         <option value="30">30 min antes</option>
         <option value="60">1 h antes</option>
       </select>
     </label>`;
   anchor.parentNode.insertBefore(wrap,anchor);
+
+  const remember=document.createElement('label');
+  remember.id='pirulinRememberReminderRow';
+  remember.style.cssText='display:flex;align-items:center;gap:9px;margin:3px 2px 10px;color:#747b88;font-size:12px;font-weight:800';
+  remember.innerHTML='<input id="pirulinRememberReminder" type="checkbox" style="width:17px;height:17px;accent-color:#ff645c"> Usar este aviso como predeterminado';
+  wrap.insertAdjacentElement('afterend',remember);
 }
 function syncOriginalModalFields(task){
   if(!task) return;
@@ -107,7 +116,9 @@ function populateAdvancedFields(){
   lastModalMode=mode;
   const time=q('#pirulinTimeInput');
   const reminder=q('#pirulinReminderInput');
+  const remember=q('#pirulinRememberReminder');
   if(!time||!reminder) return;
+  if(remember) remember.checked=false;
   if(mode==='edit'){
     const task=currentTaskFromActive();
     time.value=task?.time||'';
@@ -184,17 +195,110 @@ function decorateTaskCards(){
     meta.textContent=bits.join(' · ');
   });
 }
+
+function syncCategoriesToV51(items){
+  const categories=items.map(x=>x.name);
+  const colors=Object.fromEntries(items.map(x=>[x.name,x.color||'#8b93a6']));
+  try{
+    window.eval(`(()=>{categories=${JSON.stringify(categories)};categoryColors=${JSON.stringify(colors)};if(typeof renderCategoryFilters==='function')renderCategoryFilters();if(typeof renderCategorySelect==='function')renderCategorySelect(document.querySelector('#taskCategorySelect')?.value);if(typeof applyAllFilters==='function')applyAllFilters();})()`);
+  }catch(err){ console.warn('Pirulín category UI sync',err); }
+  renderRealCategoriesList(items);
+}
+function renderRealCategoriesList(items=window.PirulinTaskPreferences?.categories||[]){
+  const list=q('#categoriesList');
+  if(!list) return;
+  if(!items.length){ list.innerHTML='<div class="empty-small">No hay categorías.</div>'; return; }
+  list.innerHTML=items.map((cat,index)=>`
+    <div class="category-row" data-pirulin-category-id="${String(cat.id).replace(/"/g,'&quot;')}">
+      <span class="category-color" style="background:${cat.color||'#8b93a6'}"></span>
+      <span class="category-name">${String(cat.name).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span>
+      <button type="button" data-pirulin-cat-act="rename" data-index="${index}">Editar</button>
+      <button type="button" data-pirulin-cat-act="delete" data-index="${index}" class="danger">Eliminar</button>
+    </div>`).join('');
+  const p=q('#categoriesPanel .category-card p');
+  if(p) p.textContent='Tus categorías son privadas y se sincronizan solamente con tu cuenta.';
+}
+async function remapPrivateTasks(oldName,newName){
+  const tasks=window.PirulinTaskLive?.tasks||[];
+  const affected=tasks.filter(t=>!t.shared && t.categoryName===oldName);
+  await Promise.all(affected.map(t=>window.PirulinTasks.saveTask({...t,categoryName:newName,categoryId:null})));
+}
+async function addCategoryFromUI(){
+  const input=q('#newCategoryInput');
+  const name=input?.value?.trim();
+  const pref=window.PirulinTaskPreferences;
+  if(!name||!pref) return;
+  if(pref.categories.some(c=>c.name.toLocaleLowerCase('es')===name.toLocaleLowerCase('es'))) return;
+  const palette=['#ff8f70','#5f8df7','#b274e8','#6d7c92','#35bfa3','#e86f9d','#e2a33b','#56a8a1','#9a87dc'];
+  await pref.saveCategory({name,color:palette[pref.categories.length%palette.length],order:pref.categories.length});
+  if(input) input.value='';
+}
+async function renameCategoryFromUI(index){
+  const pref=window.PirulinTaskPreferences;
+  const cat=pref?.categories?.[index];
+  if(!cat) return;
+  const next=window.prompt('Nombre de la categoría',cat.name)?.trim();
+  if(!next||next===cat.name) return;
+  if(pref.categories.some(c=>c.id!==cat.id&&c.name.toLocaleLowerCase('es')===next.toLocaleLowerCase('es'))) return;
+  await pref.renameCategory(cat,next);
+  await remapPrivateTasks(cat.name,next);
+}
+async function deleteCategoryFromUI(index){
+  const pref=window.PirulinTaskPreferences;
+  const cat=pref?.categories?.[index];
+  if(!cat||!window.confirm(`¿Eliminar "${cat.name}"?`)) return;
+  const remaining=pref.categories.filter(c=>c.id!==cat.id);
+  const fallback=(remaining.find(c=>c.name==='Personal')||remaining[0])?.name||null;
+  await pref.deleteCategory(cat);
+  await remapPrivateTasks(cat.name,fallback);
+}
+function startPreferences(){
+  const pref=window.PirulinTaskPreferences;
+  if(!pref||!window.PirulinFirebase?.user) return false;
+  stopCategories?.(); stopSettings?.();
+  stopCategories=pref.subscribeCategories(async items=>{
+    pref.categories=items;
+    syncCategoriesToV51(items);
+    if(!categoryBooted && !items.length){
+      categoryBooted=true;
+      try{ await pref.ensureDefaultCategories(); }catch(err){console.error('default categories',err);}
+    }else categoryBooted=true;
+  },err=>console.error('Pirulín categories',err));
+  stopSettings=pref.subscribeSettings(settings=>{
+    pref.settings={defaultReminderMinutes:15,...settings};
+    const n=Number(pref.settings.defaultReminderMinutes);
+    if(Number.isFinite(n)) DEFAULT_REMINDER_MINUTES=n;
+  },err=>console.error('Pirulín settings',err));
+  return true;
+}
 function installHooks(){
   ensureAdvancedFields();
   lockRealIdentity();
   installRepositoryWrapper();
 
   document.addEventListener('click',event=>{
+    const addCat=event.target.closest?.('#addCategoryBtn');
+    if(addCat){
+      event.preventDefault(); event.stopImmediatePropagation();
+      addCategoryFromUI().catch(console.error); return;
+    }
+    const catAction=event.target.closest?.('[data-pirulin-cat-act]');
+    if(catAction){
+      event.preventDefault(); event.stopImmediatePropagation();
+      const index=Number(catAction.dataset.index);
+      const fn=catAction.dataset.pirulinCatAct==='rename'?renameCategoryFromUI:deleteCategoryFromUI;
+      fn(index).catch(console.error); return;
+    }
+
     if(event.target.closest?.('#saveModal')){
       ensureAdvancedFields();
       const time=q('#pirulinTimeInput')?.value||null;
       const reminderRaw=Number(q('#pirulinReminderInput')?.value ?? DEFAULT_REMINDER_MINUTES);
       pendingSaveExtras={time:time||null,reminderMinutes:time && Number.isFinite(reminderRaw) && reminderRaw>=0 ? reminderRaw : null};
+      if(q('#pirulinRememberReminder')?.checked && window.PirulinTaskPreferences){
+        const value=Number.isFinite(reminderRaw)?reminderRaw:15;
+        window.PirulinTaskPreferences.saveSettings({defaultReminderMinutes:value}).catch(console.error);
+      }
       return;
     }
 
@@ -224,6 +328,7 @@ function installHooks(){
   setInterval(()=>{
     lockRealIdentity();
     if(!window.PirulinTasks?.__advancedWrapped) installRepositoryWrapper();
+    if(!stopCategories) startPreferences();
     rolloverPersistentTasks();
     decorateTaskCards();
   },1000);
@@ -231,9 +336,11 @@ function installHooks(){
 function boot(){
   if(!q('#taskModal') || !window.PirulinFirebase) return setTimeout(boot,120);
   installHooks();
+  startPreferences();
 }
 window.addEventListener('pirulin-auth-changed',event=>{
-  if(event.detail?.signedIn) setTimeout(()=>{lockRealIdentity();rolloverPersistentTasks();},100);
+  if(event.detail?.signedIn) setTimeout(()=>{lockRealIdentity();startPreferences();rolloverPersistentTasks();},100);
+  else { stopCategories?.(); stopSettings?.(); stopCategories=null; stopSettings=null; categoryBooted=false; }
 });
 boot();
-window.PirulinTaskAdvanced={nextRepeatDate,rolloverPersistentTasks};
+window.PirulinTaskAdvanced={nextRepeatDate,rolloverPersistentTasks,get defaultReminderMinutes(){return DEFAULT_REMINDER_MINUTES;}};

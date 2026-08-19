@@ -38,6 +38,7 @@
         const appScripts = `
           <script type="module" src="./firebase-client.js"><\/script>
           <script type="module" src="./tasks-repository.js"><\/script>
+          <script type="module" src="./tasks-live-adapter.js"><\/script>
         `;
         html = html.replace('</head>', appHead + '</head>');
         html = html.replace('</body>', appScripts + '</body>');

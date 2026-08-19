@@ -32,6 +32,7 @@ function normalizeTask(input = {}) {
   const state = window.PirulinFirebase;
   const createdBy = input.createdBy || state?.person || null;
   const createdByUid = input.createdByUid || state?.user?.uid || null;
+  const reminder = input.reminderMinutes;
 
   return {
     id: String(input.id || `task-${now}-${Math.random().toString(36).slice(2, 8)}`),
@@ -40,6 +41,7 @@ function normalizeTask(input = {}) {
     categoryName: input.categoryName || null,
     date: input.date || null,
     time: input.time || null,
+    reminderMinutes: Number.isFinite(Number(reminder)) && Number(reminder) >= 0 ? Number(reminder) : null,
     repeat: input.repeat || { type: "none", days: [] },
     persistent: !!input.persistent,
     shared: !!input.shared,

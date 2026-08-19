@@ -1,8 +1,9 @@
-const CACHE = 'pirulin-pwa-v51-1';
+const CACHE = 'pirulin-pwa-v51-2';
 const CORE = [
   './',
   './index.html',
   './mockup_pirulin_v51.html',
+  './firebase-client.js',
   './manifest.webmanifest',
   './icon.svg',
   './icon-maskable.svg'

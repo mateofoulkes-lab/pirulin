@@ -18,7 +18,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.6.0-dev';
+    const PIRULIN_VERSION = '0.7.0-dev';
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
@@ -31,8 +31,6 @@
 
         let html = await response.text();
 
-        // v51 was authored against 2026-08-18. Keep the canonical mockup untouched,
-        // but promote its demo "today" values to the device's real local date at runtime.
         html = html
           .replace('let calendarCursor = new Date(2026,7,1);', 'let calendarCursor = new Date(new Date().getFullYear(),new Date().getMonth(),1);')
           .replace('let miniCursor = new Date(2026,7,1);', 'let miniCursor = new Date(new Date().getFullYear(),new Date().getMonth(),1);')
@@ -69,6 +67,7 @@
           <div id="pirulinDevVersion">v${PIRULIN_VERSION}</div>
           <script type="module" src="./firebase-client.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-repository.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./tasks-preferences.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-advanced.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
         `;

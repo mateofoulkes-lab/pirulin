@@ -213,13 +213,48 @@ async function toggleShareFromMenu(active){
   const nextShared=!task.shared;
   try {
     await window.PirulinTasks.moveTaskBetweenScopes(task,nextShared);
-    notify(nextShared ? `Compartida con ${window.PirulinFirebase?.person==="Mateo"?"Dani":"Mateo"} 🔔` : "Tarea privada");
+    notify(nextShared ? `Compartida con ${window.PirulinFirebase?.person==="Mateo"?"Dani":"Mateo"} 🔔` : "Tarea descompartida");
   } catch(err){
     console.error("Pirulín share",err);
     notify("No pude cambiar el estado compartido");
   }
   return true;
 }
+function syncShareMenuLabel(active){
+  const button=q('#taskMenu [data-act="share"]');
+  if (!button) return;
+  const task=taskFromElement(active);
+  const nested=!!active?.classList?.contains("nested-task");
+  button.textContent=task?.shared && !nested ? "Descompartir" : "Compartir";
+}
+async function swipeDeleteTask(taskEl){
+  const task=taskFromElement(taskEl);
+  if (!task || taskEl?.classList?.contains("nested-task")) return false;
+  if (!window.confirm("¿Eliminar esta tarea?")) return true;
+  try {
+    await window.PirulinTasks.deleteTask(task);
+  } catch(err){
+    console.error("Pirulín swipe delete",err);
+    notify("No pude eliminar la tarea");
+  }
+  return true;
+}
+async function swipePostponeTask(taskEl){
+  const task=taskFromElement(taskEl);
+  if (!task || taskEl?.classList?.contains("nested-task")) return false;
+  if (!window.confirm("¿Posponer esta tarea para Después?")) return true;
+  try {
+    await window.PirulinTasks.saveTask({...task,date:null,time:null});
+    notify("La tarea pasó a Después");
+  } catch(err){
+    console.error("Pirulín swipe postpone",err);
+    notify("No pude posponer la tarea");
+  }
+  return true;
+}
+window.PirulinTaskSwipeDelete=swipeDeleteTask;
+window.PirulinTaskSwipePostpone=swipePostponeTask;
+
 function rememberReorderStart(event){
   const more=event.target.closest?.(".more");
   if (!more) return;
@@ -243,7 +278,7 @@ async function persistOrderFromList(list){
   const changed=reordered.filter((task,index)=>(Number(task.order)||0)!==index);
   if (!changed.length) return;
   try {
-    await Promise.all(changed.map(task=>window.PirulinTasks.saveTask({...task,order:reordered.indexOf(task)})));
+    await Promise.all(changed.map((task,index)=>window.PirulinTasks.saveTask({...task,order:reordered.indexOf(task)})));
   } catch(err){
     console.error("Pirulín reorder",err);
     notify("No pude guardar el orden");
@@ -265,6 +300,12 @@ function installTaskHooks(){
   document.addEventListener("touchend",finishReorder);
 
   document.addEventListener("click",event=>{
+    const more=event.target.closest?.(".task .more");
+    if (more) {
+      const active=more.closest(".task");
+      setTimeout(()=>syncShareMenuLabel(active),0);
+    }
+
     const nestedCheck=event.target.closest?.(".nested-task .check");
     if (nestedCheck) {
       const nested=nestedCheck.closest(".nested-task");

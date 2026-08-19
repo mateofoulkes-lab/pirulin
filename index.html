@@ -18,7 +18,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.5.1-dev';
+    const PIRULIN_VERSION = '0.5.2-dev';
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
@@ -57,6 +57,7 @@
           <div id="pirulinDevVersion">v${PIRULIN_VERSION}</div>
           <script type="module" src="./firebase-client.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-repository.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./tasks-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
         `;
         html = html.replace('</head>', appHead + '</head>');
         html = html.replace('</body>', appScripts + '</body>');

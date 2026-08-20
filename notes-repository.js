@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   serverTimestamp,
   setDoc
@@ -19,6 +20,27 @@ const DEFAULT_CATEGORIES = [
   {id:"humor",name:"Humor",parent:null}
 ];
 
+const EXAMPLE_NOTES = [
+  {
+    id:"example-rich-note",
+    title:"Ideas para una tarde libre",
+    body:"<div>Una nota puede mezclar <strong>negrita</strong>, <em>cursiva</em> y listas sin mostrar códigos.</div><h3>Posibilidades</h3><ul><li>Salir a caminar</li><li>Probar una receta</li><li>Avanzar un proyecto</li></ul>",
+    tags:["ideas","personal"],
+    pinned:false,
+    shared:false,
+    drawing:""
+  },
+  {
+    id:"example-todo-note",
+    title:"Checklist de ejemplo",
+    body:"<div>También podés usar una nota como lista rápida:</div><div class=\"note-todo\"><input type=\"checkbox\"><span contenteditable=\"true\">Comprar café</span></div><div class=\"note-todo\"><input type=\"checkbox\"><span contenteditable=\"true\">Responder mensajes</span></div><div class=\"note-todo\"><input type=\"checkbox\" checked><span contenteditable=\"true\">Abrir Pirulín 😄</span></div>",
+    tags:["personal"],
+    pinned:false,
+    shared:false,
+    drawing:""
+  }
+];
+
 function requireFirebase(){
   const state=window.PirulinFirebase;
   if(!state?.db||!state?.user||!state?.person) throw new Error("Pirulín todavía no terminó de autenticar.");
@@ -28,6 +50,7 @@ function privateNotes(){const {db,user}=requireFirebase();return collection(db,"
 function noteMeta(){const {db,user}=requireFirebase();return collection(db,"users",user.uid,"noteMeta")}
 function noteCategories(){const {db,user}=requireFirebase();return collection(db,"users",user.uid,"noteCategories")}
 function sharedNotes(){const {db}=requireFirebase();return collection(db,"shared","notes","items")}
+function examplesMarker(){const {db,user}=requireFirebase();return doc(db,"users",user.uid,"settings","notesExamples")}
 
 function normalizeNote(input={}){
   const state=window.PirulinFirebase;
@@ -86,6 +109,15 @@ async function deleteNote(note){
   try{await deleteDoc(doc(noteMeta(),n.id))}catch{}
 }
 
+async function seedExampleNotesOnce(){
+  const marker=examplesMarker();
+  const existing=await getDoc(marker);
+  if(existing.exists())return false;
+  for(const sample of EXAMPLE_NOTES) await saveNote(sample,{previousShared:false});
+  await setDoc(marker,{seeded:true,seededAt:serverTimestamp(),version:1},{merge:true});
+  return true;
+}
+
 function subscribeNotes({onChange,onError}={}){
   const priv=new Map(), shared=new Map(), meta=new Map();
   let a=false,b=false,c=false;
@@ -123,5 +155,5 @@ function subscribeCategories({onChange,onError}={}){
   },e=>onError?.(e));
 }
 
-window.PirulinNotes={normalizeNote,saveNote,deleteNote,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES};
-export {normalizeNote,saveNote,deleteNote,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES};
+window.PirulinNotes={normalizeNote,saveNote,deleteNote,seedExampleNotesOnce,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES};
+export {normalizeNote,saveNote,deleteNote,seedExampleNotesOnce,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES};

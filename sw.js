@@ -1,4 +1,4 @@
-const CACHE = 'pirulin-pwa-v0.8.3-dev';
+const CACHE = 'pirulin-pwa-v0.8.4-dev';
 const CORE = [
   './',
   './index.html',
@@ -8,11 +8,9 @@ const CORE = [
   './tasks-preferences.js',
   './tasks-advanced.js',
   './tasks-live-adapter.js',
-  './tasks-detail-fix.js',
   './notes-repository.js',
-  './notes-ui-freeze-hotfix.js',
-  './notes-live-adapter.js',
-  './notes-ui-enhancements.js',
+  './notes-ui-stable.js',
+  './notes-live-v2.js',
   './manifest.webmanifest',
   './icon.svg',
   './icon-maskable.svg'
@@ -24,51 +22,37 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE).map(key => caches.delete(key))
-    ))
-  );
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))));
   self.clients.claim();
 });
 
 function isCritical(url, request) {
   if (request.mode === 'navigate') return true;
-  return /\/(?:index\.html|mockup_pirulin_v51\.html|firebase-client\.js|tasks-repository\.js|tasks-preferences\.js|tasks-advanced\.js|tasks-live-adapter\.js|tasks-detail-fix\.js|notes-repository\.js|notes-ui-freeze-hotfix\.js|notes-live-adapter\.js|notes-ui-enhancements\.js)$/.test(url.pathname);
+  return /\/(?:index\.html|mockup_pirulin_v51\.html|firebase-client\.js|tasks-repository\.js|tasks-preferences\.js|tasks-advanced\.js|tasks-live-adapter\.js|notes-repository\.js|notes-ui-stable\.js|notes-live-v2\.js)$/.test(url.pathname);
 }
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-
   const url = new URL(event.request.url);
-
   if (url.origin !== self.location.origin) {
     event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
     return;
   }
-
   if (isCritical(url, event.request)) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then(response => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE).then(cache => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html')))
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }).then(response => {
       if (response && response.ok) {
         const copy = response.clone();
         caches.open(CACHE).then(cache => cache.put(event.request, copy));
       }
       return response;
-    }))
-  );
+    }).catch(() => caches.match(event.request).then(cached => cached || caches.match('./index.html'))));
+    return;
+  }
+  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
+    if (response && response.ok) {
+      const copy = response.clone();
+      caches.open(CACHE).then(cache => cache.put(event.request, copy));
+    }
+    return response;
+  })));
 });

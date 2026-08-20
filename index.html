@@ -18,7 +18,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.8.2-dev';
+    const PIRULIN_VERSION = '0.8.3-dev';
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
@@ -71,8 +71,9 @@
           <script type="module" src="./tasks-preferences.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-advanced.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
-          <script type="module" src="./notes-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./tasks-detail-fix.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-ui-freeze-hotfix.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./notes-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-ui-enhancements.js?v=${PIRULIN_VERSION}"><\/script>
         `;
         html = html.replace('</head>', appHead + '</head>');

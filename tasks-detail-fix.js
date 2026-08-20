@@ -20,6 +20,7 @@ function liveTaskFor(card){
   const id=root?.dataset?.firebaseId||root?.dataset?.id;
   return id?window.PirulinTaskLive?.tasks?.find?.(t=>String(t.id)===String(id))||null:null;
 }
+function lexicalDetailTask(){try{return window.eval('typeof detailTask!=="undefined"?detailTask:null')}catch{return null}}
 function parseSubs(card){try{return JSON.parse(card?.dataset?.subtasks||'[]')}catch{return []}}
 function humanDate(iso){
   if(!iso)return 'Sin fecha';
@@ -47,7 +48,7 @@ function renderSubtaskRows(items,level=0){
 }
 
 window.renderTaskDetail=function renderTaskDetail(){
-  const card=window.detailTask||null;
+  const card=window.detailTask||lexicalDetailTask();
   const modal=q('#taskDetailModal');
   if(!modal||!card)throw new Error('Detalle de tarea sin contexto');
   try{
@@ -134,7 +135,7 @@ function install(){
       e.preventDefault();e.stopPropagation();safeOpenDetail(card);return;
     }
     if(e.target.closest?.('#addSubtaskBtn')){
-      const active=window.detailTask||window.activeTask;
+      const active=window.detailTask||lexicalDetailTask()||window.activeTask;
       setTimeout(()=>persistDetailSubtasks(active),80);
     }
   },true);

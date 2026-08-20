@@ -9,61 +9,28 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <style>
-    html,body{margin:0;height:100%;background:#fff}
-    body{display:grid;place-items:center;font-family:system-ui,sans-serif;color:#6e737d}
-    .loading{font-weight:700;font-size:14px}
-  </style>
+  <style>html,body{margin:0;height:100%;background:#fff}body{display:grid;place-items:center;font-family:system-ui,sans-serif;color:#6e737d}.loading{font-weight:700;font-size:14px}</style>
 </head>
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.8.4-dev';
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
-    }
-
-    (async () => {
-      try {
-        const response = await fetch(`./mockup_pirulin_v51.html?v=${encodeURIComponent(PIRULIN_VERSION)}`, { cache: 'reload' });
-        if (!response.ok) throw new Error('No se pudo cargar mockup_pirulin_v51.html');
-
-        let html = await response.text();
-
-        html = html
-          .replace('let calendarCursor = new Date(2026,7,1);', 'let calendarCursor = new Date(new Date().getFullYear(),new Date().getMonth(),1);')
-          .replace('let miniCursor = new Date(2026,7,1);', 'let miniCursor = new Date(new Date().getFullYear(),new Date().getMonth(),1);')
-          .replaceAll('new Date(2026,7,18)', 'new Date()')
-          .replace('const TODAY_ISO = "2026-08-18";', 'const TODAY_ISO = isoLocal(new Date());')
-          .replace('if(taskHasDate && isoLocal(selectedTaskDate)==="2026-08-18"){', 'if(taskHasDate && isoLocal(selectedTaskDate)===TODAY_ISO){')
-          .replace('if(dx>92)moveTaskToLater(task);', 'if(dx>92){ if(window.PirulinTaskSwipePostpone) window.PirulinTaskSwipePostpone(task); else moveTaskToLater(task); }')
-          .replace('if(dx<-92)deleteTaskWithConfirm(task);', 'if(dx<-92){ if(window.PirulinTaskSwipeDelete) window.PirulinTaskSwipeDelete(task); else deleteTaskWithConfirm(task); }');
-
-        const appHead = `
-          <link rel="manifest" href="./manifest.webmanifest">
-          <meta name="theme-color" content="#ffffff">
-          <meta name="mobile-web-app-capable" content="yes">
-          <meta name="apple-mobile-web-app-capable" content="yes">
-          <meta name="apple-mobile-web-app-status-bar-style" content="default">
-          <style>
-            #pirulinDevVersion{
-              position:fixed;
-              top:max(5px,env(safe-area-inset-top));
-              right:7px;
-              z-index:999999;
-              pointer-events:none;
-              font:800 9px/1 system-ui,sans-serif;
-              letter-spacing:.15px;
-              color:#747b88;
-              opacity:.52;
-              background:rgba(255,255,255,.72);
-              border-radius:999px;
-              padding:3px 5px;
-            }
-          </style>
-        `;
-        const appScripts = `
+    const PIRULIN_VERSION = '0.8.5-dev';
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
+    (async()=>{
+      try{
+        const response=await fetch(`./mockup_pirulin_v51.html?v=${encodeURIComponent(PIRULIN_VERSION)}`,{cache:'reload'});
+        if(!response.ok)throw new Error('No se pudo cargar mockup_pirulin_v51.html');
+        let html=await response.text();
+        html=html
+          .replace('let calendarCursor = new Date(2026,7,1);','let calendarCursor = new Date(new Date().getFullYear(),new Date().getMonth(),1);')
+          .replace('let miniCursor = new Date(2026,7,1);','let miniCursor = new Date(new Date().getFullYear(),new Date().getMonth(),1);')
+          .replaceAll('new Date(2026,7,18)','new Date()')
+          .replace('const TODAY_ISO = "2026-08-18";','const TODAY_ISO = isoLocal(new Date());')
+          .replace('if(taskHasDate && isoLocal(selectedTaskDate)==="2026-08-18"){','if(taskHasDate && isoLocal(selectedTaskDate)===TODAY_ISO){')
+          .replace('if(dx>92)moveTaskToLater(task);','if(dx>92){ if(window.PirulinTaskSwipePostpone) window.PirulinTaskSwipePostpone(task); else moveTaskToLater(task); }')
+          .replace('if(dx<-92)deleteTaskWithConfirm(task);','if(dx<-92){ if(window.PirulinTaskSwipeDelete) window.PirulinTaskSwipeDelete(task); else deleteTaskWithConfirm(task); }');
+        const appHead=`<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#ffffff"><style>#pirulinDevVersion{position:fixed;top:max(5px,env(safe-area-inset-top));right:7px;z-index:999999;pointer-events:none;font:800 9px/1 system-ui,sans-serif;color:#747b88;opacity:.52;background:rgba(255,255,255,.72);border-radius:999px;padding:3px 5px}</style>`;
+        const appScripts=`
           <div id="pirulinDevVersion">v${PIRULIN_VERSION}</div>
           <script type="module" src="./firebase-client.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-repository.js?v=${PIRULIN_VERSION}"><\/script>
@@ -71,19 +38,11 @@
           <script type="module" src="./tasks-preferences.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-advanced.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
-          <script type="module" src="./notes-ui-stable.js?v=${PIRULIN_VERSION}"><\/script>
-          <script type="module" src="./notes-live-v2.js?v=${PIRULIN_VERSION}"><\/script>
-        `;
-        html = html.replace('</head>', appHead + '</head>');
-        html = html.replace('</body>', appScripts + '</body>');
-
-        document.open();
-        document.write(html);
-        document.close();
-      } catch (error) {
-        console.error(error);
-        document.body.innerHTML = `<div class="loading">No pude cargar Pirulín · v${PIRULIN_VERSION}. Recargá la página.</div>`;
-      }
+          <script type="module" src="./notes-ui-v3.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./notes-live-v3.js?v=${PIRULIN_VERSION}"><\/script>`;
+        html=html.replace('</head>',appHead+'</head>').replace('</body>',appScripts+'</body>');
+        document.open();document.write(html);document.close();
+      }catch(error){console.error(error);document.body.innerHTML=`<div class="loading">No pude cargar Pirulín · v${PIRULIN_VERSION}. Recargá la página.</div>`}
     })();
   </script>
 </body>

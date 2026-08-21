@@ -14,7 +14,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.9.0-dev';
+    const PIRULIN_VERSION = '0.9.1-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{
@@ -40,6 +40,7 @@
           <script type="module" src="./tasks-advanced.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./expenses-live.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./expenses-ui-polish.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-ui-v3.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-editor-fixes.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-live-v3.js?v=${PIRULIN_VERSION}"><\/script>

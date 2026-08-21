@@ -151,8 +151,8 @@ async function hideMigrationMenuIfDone(){
 
 function installIconOverride(){
   const apply=()=>document.querySelectorAll('img[data-asset="gastos"],img.gastos-logo').forEach(img=>{
-    if(img.dataset.pingueIconTried)return;img.dataset.pingueIconTried='1';const fallback=img.src;
-    img.onerror=()=>{img.onerror=null;if(fallback)img.src=fallback};img.src='./pingue-icon.svg';
+    if(img.dataset.pirulinIconTried)return;img.dataset.pirulinIconTried='1';const fallback=img.src;
+    img.onerror=()=>{img.onerror=null;if(fallback)img.src=fallback};img.src='./pirulin-icon.svg';
   });
   setTimeout(apply,250);window.addEventListener('pirulin-auth-changed',()=>setTimeout(apply,250));
 }

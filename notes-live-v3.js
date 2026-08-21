@@ -49,7 +49,8 @@ function sameCardContent(a,b){
 function setMockNotes(notes){
   const data=notes.map(n=>({id:n.id,title:n.title||'Sin título',body:n.body||'',tags:Array.isArray(n.tags)?n.tags:[],shared:!!n.shared,pinned:!!n.pinned,drawing:n.drawing||'',createdBy:n.createdBy||null,createdByUid:n.createdByUid||null}));
   const canPatchInPlace=lastViewData.length>0&&sameCardContent(lastViewData,data);
-  safeEval(`notesData=${json(data)};${canPatchInPlace?'':'if(typeof renderNotes===\'function\')renderNotes();'}`);
+  const renderCommand=canPatchInPlace?'':"if(typeof renderNotes==='function')renderNotes();";
+  safeEval(`notesData=${json(data)};${renderCommand}`);
   lastViewData=data.map(n=>({...n,tags:[...n.tags]}));
   relabel();
   emitRendered();

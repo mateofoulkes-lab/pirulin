@@ -67,7 +67,7 @@ function normalizeNote(input={}){
     createdByUid:input.createdByUid||state?.user?.uid||null,
     updatedBy:state?.person||input.updatedBy||null,
     updatedByUid:state?.user?.uid||input.updatedByUid||null,
-    updatedAtClient:now
+    updatedAtClient:Number.isFinite(Number(input.updatedAtClient))?Number(input.updatedAtClient):now
   };
 }
 
@@ -76,36 +76,65 @@ async function saveMeta(note){
   await setDoc(doc(noteMeta(),n.id),{
     tags:n.tags,
     pinned:n.pinned,
-    updatedAtClient:Date.now(),
+    updatedAtClient:n.updatedAtClient,
     updatedAt:serverTimestamp()
   },{merge:true});
 }
 
-async function saveNote(input,{previousShared=null}={}){
-  const n=normalizeNote(input);
-  const wasShared=previousShared===null?n.shared:!!previousShared;
-  const oldRef=doc(wasShared?sharedNotes():privateNotes(),n.id);
-  const newRef=doc(n.shared?sharedNotes():privateNotes(),n.id);
+function sharedPayload(n){
+  return {
+    id:n.id,title:n.title,body:n.body,drawing:n.drawing,shared:true,
+    createdBy:n.createdBy,createdByUid:n.createdByUid,
+    updatedBy:n.updatedBy,updatedByUid:n.updatedByUid,
+    updatedAtClient:n.updatedAtClient,updatedAt:serverTimestamp()
+  };
+}
 
-  if(n.shared){
-    await setDoc(newRef,{
-      id:n.id,title:n.title,body:n.body,drawing:n.drawing,shared:true,
-      createdBy:n.createdBy,createdByUid:n.createdByUid,
-      updatedBy:n.updatedBy,updatedByUid:n.updatedByUid,
-      updatedAtClient:n.updatedAtClient,updatedAt:serverTimestamp()
-    },{merge:true});
-    await saveMeta(n);
-  }else{
-    await setDoc(newRef,{...n,shared:false,updatedAt:serverTimestamp()},{merge:true});
-    try{await deleteDoc(doc(noteMeta(),n.id))}catch{}
+async function saveNote(input,{previousShared=null}={}){
+  const state=requireFirebase();
+  const n=normalizeNote(input);
+  const ownNote=n.createdByUid===state.user.uid;
+  const privateRef=doc(privateNotes(),n.id);
+  const sharedRef=doc(sharedNotes(),n.id);
+
+  // The creator always keeps the same private document. Sharing is a mirror,
+  // not a move, so the card never has to disappear/reappear for the owner.
+  if(ownNote){
+    await setDoc(privateRef,{...n,updatedAt:serverTimestamp()},{merge:true});
+    if(n.shared){
+      await setDoc(sharedRef,sharedPayload(n),{merge:true});
+      await saveMeta(n);
+    }else{
+      try{await deleteDoc(sharedRef)}catch{}
+      try{await deleteDoc(doc(noteMeta(),n.id))}catch{}
+    }
+    return n;
   }
-  if(oldRef.path!==newRef.path) await deleteDoc(oldRef);
-  return n;
+
+  // A recipient edits the shared content in place; their tags/pin remain private.
+  if(n.shared){
+    await setDoc(sharedRef,sharedPayload(n),{merge:true});
+    await saveMeta(n);
+    return n;
+  }
+
+  // Turning off sharing is an owner action. Avoid deleting somebody else's note.
+  throw new Error("Solo quien creó la nota puede descompartirla.");
 }
 
 async function deleteNote(note){
+  const state=requireFirebase();
   const n=normalizeNote(note);
-  await deleteDoc(doc(n.shared?sharedNotes():privateNotes(),n.id));
+  const ownNote=n.createdByUid===state.user.uid;
+  if(ownNote){
+    try{await deleteDoc(doc(privateNotes(),n.id))}catch{}
+    try{await deleteDoc(doc(sharedNotes(),n.id))}catch{}
+  }else if(n.shared){
+    // Keep the shared source intact; removing another person's shared note globally
+    // would be surprising. For now only local metadata is removed.
+  }else{
+    try{await deleteDoc(doc(privateNotes(),n.id))}catch{}
+  }
   try{await deleteDoc(doc(noteMeta(),n.id))}catch{}
 }
 
@@ -124,10 +153,23 @@ function subscribeNotes({onChange,onError}={}){
   const emit=()=>{
     if(!a||!b||!c)return;
     const out=[];
-    priv.forEach((v,id)=>out.push({...v,id,shared:false,tags:Array.isArray(v.tags)?v.tags:[],pinned:!!v.pinned}));
-    shared.forEach((v,id)=>{
-      const m=meta.get(id)||{};
-      out.push({...v,id,shared:true,tags:Array.isArray(m.tags)?m.tags:[],pinned:!!m.pinned});
+    const ids=new Set([...priv.keys(),...shared.keys()]);
+    ids.forEach(id=>{
+      const p=priv.get(id),s=shared.get(id),m=meta.get(id)||{};
+      if(p){
+        out.push({
+          ...p,id,
+          // During share/unshare transitions the private doc remains present.
+          // A shared mirror or the private shared flag is enough to mark it shared.
+          shared:!!p.shared||!!s,
+          tags:Array.isArray(p.tags)?p.tags:[],
+          pinned:!!p.pinned
+        });
+        return;
+      }
+      if(s){
+        out.push({...s,id,shared:true,tags:Array.isArray(m.tags)?m.tags:[],pinned:!!m.pinned});
+      }
     });
     out.sort((x,y)=>Number(y.pinned)-Number(x.pinned)||(Number(y.updatedAtClient)||0)-(Number(x.updatedAtClient)||0));
     onChange?.(out);

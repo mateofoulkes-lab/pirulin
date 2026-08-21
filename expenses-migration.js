@@ -21,7 +21,7 @@ function currentEmail(){return String(currentState()?.user?.email||'').toLowerCa
 function currentPerson(){return currentState()?.person||'Mateo'}
 function sourceApp(){return getApps().find(a=>a.name==='pingueMigration')||initializeApp(OLD_CONFIG,'pingueMigration')}
 function targetItems(){return collection(currentState().db,'shared','expenses','items')}
-function markerRef(){return doc(currentState().db,'shared','expensesMeta','pingueMigration')}
+function markerRef(){return doc(currentState().db,'shared','expenses','migration','pingueSplit')}
 
 function patchBalancePerspective(){
   const live=window.PirulinExpensesLive,api=window.PirulinExpenses,main=$m('#gastosSuite .money-balance .balance-main');

@@ -14,7 +14,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.8.7-dev';
+    const PIRULIN_VERSION = '0.8.8-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{

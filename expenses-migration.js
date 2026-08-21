@@ -22,6 +22,26 @@ function currentPerson(){return currentState()?.person||'Mateo'}
 function sourceApp(){return getApps().find(a=>a.name==='pingueMigration')||initializeApp(OLD_CONFIG,'pingueMigration')}
 function targetItems(){return collection(currentState().db,'shared','expenses','items')}
 function markerRef(){return doc(currentState().db,'shared','expenses','migration','pingueSplit')}
+function waitFor(promise,ms,message){
+  let timer;
+  return Promise.race([
+    promise.finally(()=>clearTimeout(timer)),
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms)})
+  ]);
+}
+function setStage(label,detail=''){
+  const text=$m('#pingueMigrationText'),action=$m('#pingueMigrationAction');
+  if(text)text.textContent=detail||label;
+  if(action)action.textContent=label;
+}
+function friendlyError(err){
+  const code=String(err?.code||'');
+  if(code.includes('popup-blocked'))return 'Chrome bloqueó la ventana de Google. Cerrá este cuadro y volvé a intentar.';
+  if(code.includes('popup-closed'))return 'Se cerró la ventana de Google antes de terminar el acceso.';
+  if(code.includes('unauthorized-domain'))return 'Este dominio no está autorizado en el Firebase viejo de Pingüé Split.';
+  if(code.includes('network-request-failed'))return 'Falló la conexión con Firebase. Revisá Internet y reintentá.';
+  return String(err?.message||err||'Error desconocido.');
+}
 
 function patchBalancePerspective(){
   const live=window.PirulinExpensesLive,api=window.PirulinExpenses,main=$m('#gastosSuite .money-balance .balance-main');
@@ -77,9 +97,11 @@ function ensureMenuEntry(){
 async function authenticateOld(){
   const app=sourceApp(),auth=getAuth(app),wanted=currentEmail();
   if(auth.currentUser&&String(auth.currentUser.email||'').toLowerCase()===wanted)return auth.currentUser;
-  if(auth.currentUser)await signOut(auth);
+  if(auth.currentUser)await waitFor(signOut(auth),10000,'No pude cerrar la sesión anterior de Pingüé.');
   const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});
-  const cred=await signInWithPopup(auth,provider),email=String(cred.user?.email||'').toLowerCase();
+  setStage('Conectando con Pingüé…','Se va a abrir Google para autorizar la lectura del Firebase viejo.');
+  const cred=await waitFor(signInWithPopup(auth,provider),45000,'Google no respondió en 45 segundos. En Android suele indicar que la ventana de acceso quedó bloqueada o colgada.');
+  const email=String(cred.user?.email||'').toLowerCase();
   if(!ALLOWED.has(email))throw new Error('Esa cuenta no está autorizada en Pingüé Split.');
   if(email!==wanted){await signOut(auth);throw new Error(`Usá la misma cuenta que tenés abierta en Pirulín (${wanted}).`)}
   return cred.user;
@@ -88,10 +110,11 @@ async function authenticateOld(){
 async function dryRun(){
   await authenticateOld();
   const oldDb=getFirestore(sourceApp());
-  const [sourceSnap,targetSnap]=await Promise.all([
-    getDocs(collection(oldDb,'groups',OLD_GROUP,'expenses')),
-    getDocs(targetItems())
-  ]);
+  setStage('Leyendo Pingüé…','Leyendo el historial original. Todavía no se modifica ningún dato.');
+  const sourceSnap=await waitFor(getDocs(collection(oldDb,'groups',OLD_GROUP,'expenses')),20000,'Pingüé Split no respondió en 20 segundos.');
+  setStage('Leyendo Pirulín…','Leyendo los movimientos que ya existen en la base nueva.');
+  const targetSnap=await waitFor(getDocs(targetItems()),20000,'Pirulín no respondió en 20 segundos.');
+  setStage('Comparando…','Comparando IDs entre las dos bases.');
   const source=sourceSnap.docs.map(d=>({id:d.id,data:d.data()}));
   const targetIds=new Set(targetSnap.docs.map(d=>d.id));
   const missing=source.filter(x=>!targetIds.has(x.id));
@@ -104,9 +127,12 @@ async function copyMissing(report,onProgress){
   for(let i=0;i<missing.length;i+=400){
     const chunk=missing.slice(i,i+400),batch=writeBatch(db);
     chunk.forEach(x=>batch.set(doc(db,'shared','expenses','items',x.id),x.data));
-    await batch.commit();copied+=chunk.length;onProgress?.(copied,missing.length);
+    await waitFor(batch.commit(),25000,'Una tanda de copia tardó demasiado. Podés reintentar sin riesgo de duplicar movimientos.');
+    copied+=chunk.length;onProgress?.(copied,missing.length);
   }
-  const verify=await getDocs(targetItems()),ids=new Set(verify.docs.map(d=>d.id));
+  setStage('Verificando…','Comprobando que todos los IDs originales estén presentes en Pirulín.');
+  const verify=await waitFor(getDocs(targetItems()),20000,'La verificación final tardó demasiado.');
+  const ids=new Set(verify.docs.map(d=>d.id));
   const absent=report.source.filter(x=>!ids.has(x.id));
   if(absent.length)throw new Error(`La verificación encontró ${absent.length} movimientos faltantes.`);
   await setDoc(markerRef(),{
@@ -122,10 +148,11 @@ async function openMigration(){
   modal.classList.add('show');box.style.display='none';action.disabled=false;action.textContent='Continuar con Google';
   text.textContent='Primero hacemos una comparación. Pingüé Split queda completamente intacto.';
   action.onclick=async()=>{
-    action.disabled=true;action.textContent='Comparando…';
+    action.disabled=true;
     try{
       const report=await dryRun();
       box.style.display='block';box.innerHTML=`<b>Comparación lista</b><br>Pingüé Split: ${report.source.length} movimientos<br>Ya presentes en Pirulín: ${report.already}<br><b>Faltan copiar: ${report.missing.length}</b>`;
+      text.textContent='Comparación terminada. Hasta acá no se escribió nada.';
       if(!report.missing.length){
         action.textContent='Todo migrado ✓';
         await setDoc(markerRef(),{sourceProject:'pingue-split',sourceGroup:OLD_GROUP,sourceCount:report.source.length,copiedCount:0,verifiedCount:report.source.length,completedBy:currentEmail(),completedAt:serverTimestamp()},{merge:true});
@@ -133,14 +160,14 @@ async function openMigration(){
       }
       action.disabled=false;action.textContent=`Copiar ${report.missing.length} movimientos`;
       action.onclick=async()=>{
-        action.disabled=true;action.textContent='Copiando…';
+        action.disabled=true;setStage('Copiando…','Copiando solamente los IDs que faltan. Pingüé sigue siendo solo lectura.');
         try{
           const result=await copyMissing(report,(done,total)=>{action.textContent=`Copiando ${done}/${total}…`});
           box.innerHTML=`<b>Migración verificada ✓</b><br>${result.copied} movimientos copiados.<br>Los ${report.source.length} IDs originales están presentes en Pirulín.`;
-          action.textContent='Listo ✓';setTimeout(hideMigrationMenuIfDone,50);
-        }catch(err){console.error(err);box.innerHTML=`<b>No se completó la copia.</b><br>${String(err.message||err)}`;action.disabled=false;action.textContent='Reintentar'}
+          text.textContent='Migración terminada y verificada.';action.textContent='Listo ✓';setTimeout(hideMigrationMenuIfDone,50);
+        }catch(err){console.error(err);box.style.display='block';box.innerHTML=`<b>No se completó la copia.</b><br>${friendlyError(err)}<br><br>Podés reintentar: los IDs ya copiados no se duplican.`;action.disabled=false;action.textContent='Reintentar'}
       };
-    }catch(err){console.error(err);box.style.display='block';box.innerHTML=`<b>No pude leer Pingüé Split.</b><br>${String(err.message||err)}`;action.disabled=false;action.textContent='Reintentar'}
+    }catch(err){console.error(err);box.style.display='block';box.innerHTML=`<b>No pude completar la comparación.</b><br>${friendlyError(err)}`;text.textContent='La comparación se detuvo sin modificar datos.';action.disabled=false;action.textContent='Reintentar'}
   };
 }
 

@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, getDoc, doc, writeBatch, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+import { initializeFirestore, collection, getDocs, getDoc, doc, writeBatch, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
 
 const OLD_CONFIG={
   apiKey:"AIzaSyAuOadZ5DaVZFkKnKiufvX0dmJUL5kMDTg",
@@ -15,11 +15,19 @@ const ALLOWED=new Set(['mateofoulkes@gmail.com','danifernandez.sn@gmail.com']);
 const $m=(s,r=document)=>r.querySelector(s);
 const money=new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:2});
 const fmt=n=>money.format(Math.round(Number(n||0)*100)/100);
+let oldDb=null;
 
 function currentState(){return window.PirulinFirebase}
 function currentEmail(){return String(currentState()?.user?.email||'').toLowerCase()}
 function currentPerson(){return currentState()?.person||'Mateo'}
 function sourceApp(){return getApps().find(a=>a.name==='pingueMigration')||initializeApp(OLD_CONFIG,'pingueMigration')}
+function sourceDb(){
+  if(oldDb)return oldDb;
+  oldDb=initializeFirestore(sourceApp(),{
+    experimentalForceLongPolling:true
+  });
+  return oldDb;
+}
 function targetItems(){return collection(currentState().db,'shared','expenses','items')}
 function markerRef(){return doc(currentState().db,'shared','expenses','migration','pingueSplit')}
 function waitFor(promise,ms,message){
@@ -39,7 +47,8 @@ function friendlyError(err){
   if(code.includes('popup-blocked'))return 'Chrome bloqueó la ventana de Google. Cerrá este cuadro y volvé a intentar.';
   if(code.includes('popup-closed'))return 'Se cerró la ventana de Google antes de terminar el acceso.';
   if(code.includes('unauthorized-domain'))return 'Este dominio no está autorizado en el Firebase viejo de Pingüé Split.';
-  if(code.includes('network-request-failed'))return 'Falló la conexión con Firebase. Revisá Internet y reintentá.';
+  if(code.includes('permission-denied'))return 'Pingüé respondió, pero Firestore rechazó la lectura. Verificá que hayas autorizado la misma cuenta de Google que usás en Pirulín.';
+  if(code.includes('network-request-failed')||code.includes('unavailable'))return 'Falló la conexión con Firebase. Revisá Internet y reintentá.';
   return String(err?.message||err||'Error desconocido.');
 }
 
@@ -108,10 +117,9 @@ async function authenticateOld(){
 }
 
 async function dryRun(){
-  await authenticateOld();
-  const oldDb=getFirestore(sourceApp());
-  setStage('Leyendo Pingüé…','Leyendo el historial original. Todavía no se modifica ningún dato.');
-  const sourceSnap=await waitFor(getDocs(collection(oldDb,'groups',OLD_GROUP,'expenses')),20000,'Pingüé Split no respondió en 20 segundos.');
+  const user=await authenticateOld();
+  setStage('Leyendo Pingüé…',`Conectado como ${user.email}. Leyendo el historial original por conexión compatible con Android.`);
+  const sourceSnap=await waitFor(getDocs(collection(sourceDb(),'groups',OLD_GROUP,'expenses')),30000,'Pingüé Split no respondió en 30 segundos ni siquiera usando conexión compatible con Android.');
   setStage('Leyendo Pirulín…','Leyendo los movimientos que ya existen en la base nueva.');
   const targetSnap=await waitFor(getDocs(targetItems()),20000,'Pirulín no respondió en 20 segundos.');
   setStage('Comparando…','Comparando IDs entre las dos bases.');

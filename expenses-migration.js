@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, writeBatch, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, getDoc, doc, writeBatch, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
 
 const OLD_CONFIG={
   apiKey:"AIzaSyAuOadZ5DaVZFkKnKiufvX0dmJUL5kMDTg",
@@ -28,9 +28,12 @@ function patchBalancePerspective(){
   if(!live||!api||!main)return;
   const items=live.items||[],ex=items.filter(x=>!x.settlement),sets=items.filter(x=>x.settlement),b=api.computeBalances(ex,sets).balanceA;
   const person=currentPerson();
-  if(Math.abs(b)<=0.01)main.textContent='Están a mano 😊';
-  else if(person==='Mateo')main.textContent=b>0?`Dani te debe ${fmt(b)}`:`Le debés ${fmt(Math.abs(b))} a Dani`;
-  else main.textContent=b>0?`Le debés ${fmt(b)} a Mateo`:`Mateo te debe ${fmt(Math.abs(b))}`;
+  let desired='Están a mano 😊';
+  if(Math.abs(b)>0.01){
+    if(person==='Mateo')desired=b>0?`Dani te debe ${fmt(b)}`:`Le debés ${fmt(Math.abs(b))} a Dani`;
+    else desired=b>0?`Le debés ${fmt(b)} a Mateo`:`Mateo te debe ${fmt(Math.abs(b))}`;
+  }
+  if(main.textContent!==desired)main.textContent=desired;
   const btn=$m('#openSettleMock');if(btn)btn.style.display=Math.abs(b)<=0.01?'none':'';
 }
 
@@ -143,12 +146,7 @@ async function openMigration(){
 
 async function hideMigrationMenuIfDone(){
   const btn=$m('#migratePingueBtn');if(!btn||!currentState()?.db)return;
-  try{
-    const [targetSnap,oldAttempt]=await Promise.all([getDocs(targetItems()),Promise.resolve(null)]);
-    // Hide after a successful marker write in this session. Keep it available before migration even if Pirulín has test data.
-    const markerSnap=await import("https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js").then(m=>m.getDoc(markerRef()));
-    btn.style.display=markerSnap.exists()?'none':'';
-  }catch{btn.style.display=''}
+  try{const markerSnap=await getDoc(markerRef());btn.style.display=markerSnap.exists()?'none':''}catch{btn.style.display=''}
 }
 
 function installIconOverride(){

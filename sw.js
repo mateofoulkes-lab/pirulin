@@ -1,4 +1,4 @@
-const CACHE = 'pirulin-pwa-v0.9.2-dev';
+const CACHE = 'pirulin-pwa-v0.9.3-dev';
 const CORE = [
   './','./index.html','./mockup_pirulin_v51.html','./firebase-client.js',
   './tasks-repository.js','./tasks-preferences.js','./tasks-advanced.js','./tasks-live-adapter.js',

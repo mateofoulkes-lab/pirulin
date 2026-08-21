@@ -54,19 +54,36 @@ function handleTodoEnter(e){
 }
 
 function install(){
-  if(document.documentElement.dataset.notesEditorFixesV4==='1')return;
-  document.documentElement.dataset.notesEditorFixesV4='1';
+  if(document.documentElement.dataset.notesEditorFixesV5==='1')return;
+  document.documentElement.dataset.notesEditorFixesV5='1';
 
-  /* El texto base del editor es 400. Dejamos que contenteditable/execCommand
-     gestione B/I/U y sus combinaciones para preservar el Range nativo.
-     Solo reforzamos visualmente el marcado bold que genera el navegador. */
   const style=document.createElement('style');
   style.textContent=`
     #noteRichEditor strong,#noteRichEditor b,
     .note-rich-preview strong,.note-rich-preview b,
     #notesGrid .note-preview strong,#notesGrid .note-preview b{
       font-weight:900!important;
-      font-synthesis:weight;
+      font-synthesis:weight style!important;
+    }
+    #noteRichEditor em,#noteRichEditor i,
+    .note-rich-preview em,.note-rich-preview i,
+    #notesGrid .note-preview em,#notesGrid .note-preview i{
+      font-style:italic!important;
+      font-synthesis:weight style!important;
+    }
+    #noteRichEditor strong em,#noteRichEditor em strong,
+    #noteRichEditor b i,#noteRichEditor i b,
+    #noteRichEditor strong i,#noteRichEditor i strong,
+    #noteRichEditor b em,#noteRichEditor em b,
+    .note-rich-preview strong em,.note-rich-preview em strong,
+    .note-rich-preview b i,.note-rich-preview i b,
+    .note-rich-preview strong i,.note-rich-preview i strong,
+    .note-rich-preview b em,.note-rich-preview em b,
+    #notesGrid .note-preview strong em,#notesGrid .note-preview em strong,
+    #notesGrid .note-preview b i,#notesGrid .note-preview i b{
+      font-weight:900!important;
+      font-style:oblique 14deg!important;
+      font-synthesis:weight style!important;
     }
   `;
   document.head.appendChild(style);

@@ -176,18 +176,10 @@ async function hideMigrationMenuIfDone(){
   try{const markerSnap=await getDoc(markerRef());btn.style.display=markerSnap.exists()?'none':''}catch{btn.style.display=''}
 }
 
-function installIconOverride(){
-  const apply=()=>document.querySelectorAll('img[data-asset="gastos"],img.gastos-logo').forEach(img=>{
-    if(img.dataset.pirulinIconTried)return;img.dataset.pirulinIconTried='1';const fallback=img.src;
-    img.onerror=()=>{img.onerror=null;if(fallback)img.src=fallback};img.src='./pirulin-icon.svg';
-  });
-  setTimeout(apply,250);window.addEventListener('pirulin-auth-changed',()=>setTimeout(apply,250));
-}
-
 function boot(){
   if(!currentState()?.user||!$m('#gastosSuite'))return setTimeout(boot,100);
   ensureMigrationUI();ensureMenuEntry();hideMigrationMenuIfDone();patchBalancePerspective();
 }
-installBalanceObserver();installIconOverride();boot();
+installBalanceObserver();boot();
 window.addEventListener('pirulin-auth-changed',e=>{if(e.detail?.signedIn)setTimeout(boot,0)});
 window.PirulinExpenseMigration={open:openMigration,dryRun};

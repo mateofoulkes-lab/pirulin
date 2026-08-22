@@ -15,6 +15,14 @@ function ensureMonthOption(select,value){
     const option=document.createElement('option');option.value=value;option.textContent=monthLabel(value);select.appendChild(option);
   }
 }
+function ensureBalancePosition(){
+  const list=$g('#expenseListMock'),balance=$g('#gastosSuite .money-balance');
+  if(!list||!balance)return;
+  if(list.nextElementSibling!==balance)list.insertAdjacentElement('afterend',balance);
+  balance.style.removeProperty('display');
+  balance.hidden=false;
+  balance.setAttribute('aria-hidden','false');
+}
 function syncSettleVisibility(){
   const main=$g('#gastosSuite .money-balance .balance-main'),button=$g('#openSettleMock');
   if(!main||!button)return;
@@ -28,7 +36,7 @@ function install(){
   document.documentElement.dataset.expensesUiPolish='1';
 
   const sub=$g('.balance-sub',balance);if(sub)sub.remove();
-  if(list.nextElementSibling!==balance)list.insertAdjacentElement('afterend',balance);
+  ensureBalancePosition();
 
   const monthBox=month.closest('.expense-month');
   if(monthBox&&!$g('#expensePrevMonth')){
@@ -43,9 +51,9 @@ function install(){
 
   const style=document.createElement('style');style.id='expensesUiPolishStyle';style.textContent=`
     #gastosSuite .gastos-scroll{padding-bottom:150px!important}
-    #gastosSuite .money-balance{margin:20px 0 8px!important;padding:15px 16px!important;border-radius:18px!important}
-    #gastosSuite .money-balance .balance-main{font-size:22px!important;margin-top:2px!important}
-    #gastosSuite .money-balance .eyebrow{margin-bottom:2px!important}
+    #gastosSuite .money-balance{display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:1!important;width:auto!important;flex:none!important;margin:20px 0 8px!important;padding:15px 16px!important;border-radius:18px!important}
+    #gastosSuite .money-balance .balance-main{display:block!important;visibility:visible!important;opacity:1!important;font-size:22px!important;margin-top:2px!important}
+    #gastosSuite .money-balance .eyebrow{display:block!important;margin-bottom:2px!important}
     #gastosSuite .settle-btn{margin-top:11px!important}
     #gastosSuite .gastos-fab{left:auto!important;right:18px!important;bottom:max(18px,env(safe-area-inset-bottom))!important;transform:none!important}
     #gastosSuite .gastos-fab:active{transform:scale(.95)!important}
@@ -57,6 +65,12 @@ function install(){
     #gastosSuite .expense-month-arrow:active{background:#e7eaf0!important;transform:scale(.94)}
     #expensePrevMonth{grid-column:1!important}#expenseNextMonth{grid-column:3!important}
   `;document.head.appendChild(style);
+
+  const listObserver=new MutationObserver(()=>{
+    ensureBalancePosition();
+    syncSettleVisibility();
+  });
+  listObserver.observe(list,{childList:true});
 
   syncSettleVisibility();
   new MutationObserver(syncSettleVisibility).observe($g('.balance-main',balance),{childList:true,subtree:true,characterData:true});

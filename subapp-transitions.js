@@ -11,13 +11,26 @@ function installStyles(){if(document.querySelector('#subappTransitionStyles'))re
 #launcher.pirulin-surface-leave,#tasksSuite.pirulin-surface-leave,#gastosSuite.pirulin-surface-leave,#comidasSuite.pirulin-surface-leave,#notesSuite.pirulin-surface-leave{animation:pirulinSurfaceOut .085s ease-in both;pointer-events:none}
 @media(prefers-reduced-motion:reduce){#launcher.pirulin-surface-enter,#tasksSuite.pirulin-surface-enter,#gastosSuite.pirulin-surface-enter,#comidasSuite.pirulin-surface-enter,#notesSuite.pirulin-surface-enter,#launcher.pirulin-surface-leave,#tasksSuite.pirulin-surface-leave,#gastosSuite.pirulin-surface-leave,#comidasSuite.pirulin-surface-leave,#notesSuite.pirulin-surface-leave{animation:none!important}}
 `;document.head.appendChild(s)}
+function fallbackRoute(targetId){
+  try{
+    if(targetId==='launcher')return window.eval("typeof openLauncher==='function'?(openLauncher(),true):false");
+    if(targetId==='tasksSuite')return window.eval("typeof openTasksApp==='function'?(openTasksApp(),true):false");
+    if(targetId==='gastosSuite')return window.eval("typeof openGastosApp==='function'?(openGastosApp(),true):false");
+    if(targetId==='comidasSuite')return window.eval("typeof openComidasApp==='function'?(openComidasApp(),true):false");
+    if(targetId==='notesSuite')return window.eval("typeof openNotesApp==='function'?(openNotesApp(),true):false");
+  }catch(e){console.error('Pirulín route fallback',e)}
+  return false;
+}
 function animateRoute(button,targetId){
   const current=visibleSurface(),original=button.onclick;
-  if(typeof original!=='function'){return false}
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finish=()=>{
     current?.classList.remove('pirulin-surface-leave');
-    bypassRouteAnimation=true;try{original.call(button,new MouseEvent('click',{bubbles:false,cancelable:true}))}finally{bypassRouteAnimation=false}
+    bypassRouteAnimation=true;
+    try{
+      if(typeof original==='function')original.call(button,new MouseEvent('click',{bubbles:false,cancelable:true}));
+      else fallbackRoute(targetId);
+    }finally{bypassRouteAnimation=false}
     const target=document.getElementById(targetId);if(target&&!reduced){target.classList.remove('pirulin-surface-enter');void target.offsetWidth;target.classList.add('pirulin-surface-enter');setTimeout(()=>target.classList.remove('pirulin-surface-enter'),155)}
   };
   if(!current||reduced){finish();return true}

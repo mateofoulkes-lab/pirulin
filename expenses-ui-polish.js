@@ -15,10 +15,9 @@ function ensureMonthOption(select,value){
     const option=document.createElement('option');option.value=value;option.textContent=monthLabel(value);select.appendChild(option);
   }
 }
-function ensureBalancePosition(){
-  const list=$g('#expenseListMock'),balance=$g('#gastosSuite .money-balance');
-  if(!list||!balance)return;
-  if(list.nextElementSibling!==balance)list.insertAdjacentElement('afterend',balance);
+function ensureBalanceVisible(){
+  const balance=$g('#gastosSuite .money-balance');
+  if(!balance)return;
   balance.style.removeProperty('display');
   balance.hidden=false;
   balance.setAttribute('aria-hidden','false');
@@ -36,7 +35,7 @@ function install(){
   document.documentElement.dataset.expensesUiPolish='1';
 
   const sub=$g('.balance-sub',balance);if(sub)sub.remove();
-  ensureBalancePosition();
+  ensureBalanceVisible();
 
   const monthBox=month.closest('.expense-month');
   if(monthBox&&!$g('#expensePrevMonth')){
@@ -50,12 +49,20 @@ function install(){
   }
 
   const style=document.createElement('style');style.id='expensesUiPolishStyle';style.textContent=`
-    #gastosSuite .gastos-scroll{padding-bottom:150px!important}
-    #gastosSuite .money-balance{display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:1!important;width:auto!important;flex:none!important;margin:20px 0 8px!important;padding:15px 16px!important;border-radius:18px!important}
-    #gastosSuite .money-balance .balance-main{display:block!important;visibility:visible!important;opacity:1!important;font-size:22px!important;margin-top:2px!important}
-    #gastosSuite .money-balance .eyebrow{display:block!important;margin-bottom:2px!important}
-    #gastosSuite .settle-btn{margin-top:11px!important}
-    #gastosSuite .gastos-fab{left:auto!important;right:18px!important;bottom:max(18px,env(safe-area-inset-bottom))!important;transform:none!important}
+    #gastosSuite .gastos-scroll{padding-bottom:170px!important}
+    #gastosSuite .money-balance{
+      display:block!important;visibility:visible!important;opacity:1!important;
+      position:fixed!important;left:18px!important;right:auto!important;
+      bottom:max(18px,env(safe-area-inset-bottom))!important;
+      z-index:60!important;width:min(280px,calc(100vw - 112px))!important;
+      box-sizing:border-box!important;flex:none!important;
+      margin:0!important;padding:12px 14px!important;border-radius:18px!important;
+      box-shadow:0 8px 28px rgba(31,41,55,.16)!important;
+    }
+    #gastosSuite .money-balance .balance-main{display:block!important;visibility:visible!important;opacity:1!important;font-size:19px!important;line-height:1.15!important;margin-top:2px!important}
+    #gastosSuite .money-balance .eyebrow{display:block!important;margin-bottom:2px!important;font-size:9px!important}
+    #gastosSuite .settle-btn{margin-top:9px!important;width:100%!important}
+    #gastosSuite .gastos-fab{left:auto!important;right:18px!important;bottom:max(18px,env(safe-area-inset-bottom))!important;transform:none!important;z-index:61!important}
     #gastosSuite .gastos-fab:active{transform:scale(.95)!important}
     #gastosSuite .expense-toolbar{align-items:stretch!important}
     #gastosSuite .expense-month-nav{display:grid!important;grid-template-columns:38px minmax(0,1fr) 38px!important;grid-template-rows:auto auto!important;align-items:center!important;column-gap:4px!important;padding:6px!important}
@@ -64,10 +71,11 @@ function install(){
     #gastosSuite .expense-month-arrow{grid-row:2!important;width:36px!important;height:36px!important;border:0!important;border-radius:11px!important;background:transparent!important;color:#697282!important;font-size:27px!important;line-height:1!important;display:grid!important;place-items:center!important;padding:0!important}
     #gastosSuite .expense-month-arrow:active{background:#e7eaf0!important;transform:scale(.94)}
     #expensePrevMonth{grid-column:1!important}#expenseNextMonth{grid-column:3!important}
+    @media(max-width:370px){#gastosSuite .money-balance{width:calc(100vw - 106px)!important;left:14px!important;padding:11px 12px!important}#gastosSuite .gastos-fab{right:14px!important}}
   `;document.head.appendChild(style);
 
   const listObserver=new MutationObserver(()=>{
-    ensureBalancePosition();
+    ensureBalanceVisible();
     syncSettleVisibility();
   });
   listObserver.observe(list,{childList:true});

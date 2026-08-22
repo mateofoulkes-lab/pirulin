@@ -45,7 +45,8 @@ function decorateSummary(day,tot){
   const stats=[...document.querySelectorAll('#foodRegisterPane .food-summary .food-stat')];if(stats.length<3)return;
   const third=stats[2],icon=activityIcon(day),weight=day?.weightKg;
   third.classList.add('food-weight-activity-stat');
-  third.innerHTML=`<div class="food-weight-line"><b>${weight?fmt(weight)+' kg':'—'}</b>${icon?`<span class="food-activity-badge" title="Actividad registrada">${icon}</span>`:''}</div><span>${weight?'peso':'sin peso'}${icon?` · ${tot.exerciseMin?tot.exerciseMin+' min':'actividad'}`:''}</span>`;
+  const html=`<div class="food-weight-line"><b>${weight?fmt(weight)+' kg':'—'}</b>${icon?`<span class="food-activity-badge" title="Actividad registrada">${icon}</span>`:''}</div><span>${weight?'peso':'sin peso'}${icon?` · ${tot.exerciseMin?tot.exerciseMin+' min':'actividad'}`:''}</span>`;
+  if(third.innerHTML!==html)third.innerHTML=html;
 }
 function decorateScales(day,t,tot){
   const cards=[...document.querySelectorAll('#foodRegisterPane .food-scale-card')];if(cards.length<2)return;
@@ -55,10 +56,12 @@ function decorateScales(day,t,tot){
   ];
   cards.slice(0,2).forEach((card,i)=>{
     const v=values[i],head=card.querySelector('.food-scale-head span'),marker=card.querySelector('.food-marker');
-    if(head){head.innerHTML=`${fmt(v.value)} ${v.unit} · ${v.status}<small class="food-saved-target">${v.range}</small>`}
+    const html=`${fmt(v.value)} ${v.unit} · ${v.status}<small class="food-saved-target">${v.range}</small>`;
+    if(head&&head.innerHTML!==html)head.innerHTML=html;
     if(marker)marker.style.left=`${v.pct}%`;
   });
-  const reco=document.querySelector('#foodRegisterPane .food-reco');if(reco)reco.textContent=recommendation(day,t,tot);
+  const reco=document.querySelector('#foodRegisterPane .food-reco'),text=recommendation(day,t,tot);
+  if(reco&&reco.textContent!==text)reco.textContent=text;
 }
 function decorate(){
   if(decorating)return;decorating=true;
@@ -91,7 +94,11 @@ function styles(){
 function install(){
   if(!window.PirulinComidas||!window.PirulinComidasLive)return false;
   patchSave();styles();
-  const root=document.querySelector('#comidasBody');if(root&&!root.dataset.contextObserved){root.dataset.contextObserved='1';new MutationObserver(()=>queueMicrotask(decorate)).observe(root,{childList:true,subtree:true})}
+  const root=document.querySelector('#comidasBody');
+  if(root&&!root.dataset.contextObserved){
+    root.dataset.contextObserved='1';
+    new MutationObserver(()=>queueMicrotask(decorate)).observe(root,{childList:true});
+  }
   decorate();backfillMissingTargets();return true;
 }
 function boot(){if(install())return;setTimeout(boot,100)}

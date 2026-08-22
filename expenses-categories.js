@@ -46,16 +46,20 @@ function installSaveGuard(){
 }
 
 function installCategorySelect(){
-  const input=$c('#expenseCategoryMock');
-  if(!input)return setTimeout(installCategorySelect,100);
-  if(input.tagName==='SELECT')return;
-  const select=document.createElement('select');
-  select.id=input.id;select.className=input.className;select.required=true;select.setAttribute('aria-label','Categoría');
+  const current=$c('#expenseCategoryMock');
+  if(!current)return setTimeout(installCategorySelect,100);
+  let select=current;
+  if(current.tagName!=='SELECT'){
+    select=document.createElement('select');
+    select.id=current.id;select.className=current.className;
+    current.replaceWith(select);
+  }
+  select.required=true;select.setAttribute('aria-label','Categoría');
   select.innerHTML='<option value="" disabled selected>Elegí una categoría</option>'+CATEGORIES.map(x=>`<option value="${x}">${x}</option>`).join('');
-  input.replaceWith(select);
 
   const modal=$c('#expenseModalMock');
-  if(modal){
+  if(modal&&!modal.dataset.categoryObserver){
+    modal.dataset.categoryObserver='1';
     new MutationObserver(()=>{
       if(!modal.classList.contains('show'))return;
       const s=$c('#expenseCategoryMock');if(!s)return;

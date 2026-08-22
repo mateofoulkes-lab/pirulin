@@ -11,10 +11,9 @@ function isAllTaskNotToday(card){
   const task=taskForCard(card);
   return !!task&&task.date!==todayISO();
 }
-async function assignToday(card,{confirmFirst=true}={}){
+async function assignToday(card){
   const task=taskForCard(card);
   if(!task||task.date===todayISO())return false;
-  if(confirmFirst&&!window.confirm('¿Asignar esta tarea a hoy?'))return true;
   try{
     await window.PirulinTasks.saveTask({...task,date:todayISO()});
     try{window.eval(`if(typeof say==='function')say('Tarea asignada a hoy')`)}catch{}
@@ -49,12 +48,6 @@ function install(){
   document.documentElement.dataset.tasksAssignToday='1';
   ensureMenuButton();
 
-  const originalSwipeDelete=window.PirulinTaskSwipeDelete;
-  window.PirulinTaskSwipeDelete=async card=>{
-    if(isAllTaskNotToday(card))return assignToday(card,{confirmFirst:true});
-    return originalSwipeDelete?originalSwipeDelete(card):false;
-  };
-
   document.addEventListener('click',e=>{
     const more=e.target.closest?.('#allList .task .more');
     if(more)setTimeout(syncMenu,0);
@@ -63,7 +56,7 @@ function install(){
       e.preventDefault();e.stopImmediatePropagation();
       document.querySelector('#taskMenu')?.classList.remove('show');
       const card=window.activeTask;
-      if(isAllTaskNotToday(card))assignToday(card,{confirmFirst:false});
+      if(isAllTaskNotToday(card))assignToday(card);
     }
   },true);
   return true;

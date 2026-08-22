@@ -20,6 +20,8 @@ const DEFAULT_CATEGORIES = [
   {id:"humor",name:"Humor",parent:null}
 ];
 
+const NOTE_COLORS=["yellow","rose","green","blue","lilac","peach"];
+
 const EXAMPLE_NOTES = [
   {
     id:"example-rich-note",
@@ -28,7 +30,8 @@ const EXAMPLE_NOTES = [
     tags:["ideas","personal"],
     pinned:false,
     shared:false,
-    drawing:""
+    drawing:"",
+    color:"blue"
   },
   {
     id:"example-todo-note",
@@ -37,7 +40,8 @@ const EXAMPLE_NOTES = [
     tags:["personal"],
     pinned:false,
     shared:false,
-    drawing:""
+    drawing:"",
+    color:"green"
   }
 ];
 
@@ -51,6 +55,7 @@ function noteMeta(){const {db,user}=requireFirebase();return collection(db,"user
 function noteCategories(){const {db,user}=requireFirebase();return collection(db,"users",user.uid,"noteCategories")}
 function sharedNotes(){const {db}=requireFirebase();return collection(db,"shared","notes","items")}
 function examplesMarker(){const {db,user}=requireFirebase();return doc(db,"users",user.uid,"settings","notesExamples")}
+function validColor(value){return NOTE_COLORS.includes(String(value||""))?String(value):null}
 
 function normalizeNote(input={}){
   const state=window.PirulinFirebase;
@@ -60,6 +65,7 @@ function normalizeNote(input={}){
     title:String(input.title||"Sin título").trim()||"Sin título",
     body:String(input.body||""),
     drawing:String(input.drawing||""),
+    color:validColor(input.color),
     shared:!!input.shared,
     pinned:!!input.pinned,
     tags:Array.isArray(input.tags)?[...new Set(input.tags.map(String))]:[],
@@ -83,7 +89,7 @@ async function saveMeta(note){
 
 function sharedPayload(n){
   return {
-    id:n.id,title:n.title,body:n.body,drawing:n.drawing,shared:true,
+    id:n.id,title:n.title,body:n.body,drawing:n.drawing,color:n.color,shared:true,
     createdBy:n.createdBy,createdByUid:n.createdByUid,
     updatedBy:n.updatedBy,updatedByUid:n.updatedByUid,
     updatedAtClient:n.updatedAtClient,updatedAt:serverTimestamp()
@@ -97,8 +103,6 @@ async function saveNote(input,{previousShared=null}={}){
   const privateRef=doc(privateNotes(),n.id);
   const sharedRef=doc(sharedNotes(),n.id);
 
-  // The creator always keeps the same private document. Sharing is a mirror,
-  // not a move, so the card never has to disappear/reappear for the owner.
   if(ownNote){
     await setDoc(privateRef,{...n,updatedAt:serverTimestamp()},{merge:true});
     if(n.shared){
@@ -111,15 +115,25 @@ async function saveNote(input,{previousShared=null}={}){
     return n;
   }
 
-  // A recipient edits the shared content in place; their tags/pin remain private.
   if(n.shared){
     await setDoc(sharedRef,sharedPayload(n),{merge:true});
     await saveMeta(n);
     return n;
   }
 
-  // Turning off sharing is an owner action. Avoid deleting somebody else's note.
   throw new Error("Solo quien creó la nota puede descompartirla.");
+}
+
+async function setNoteColor(note,color){
+  const state=requireFirebase();
+  const key=validColor(color);
+  if(!key)throw new Error("Color de nota inválido");
+  const id=String(note?.id||"");
+  if(!id)throw new Error("Nota inválida");
+  const own=note?.createdByUid===state.user.uid;
+  if(own)await setDoc(doc(privateNotes(),id),{color:key},{merge:true});
+  if(note?.shared)await setDoc(doc(sharedNotes(),id),{color:key},{merge:true});
+  return key;
 }
 
 async function deleteNote(note){
@@ -130,8 +144,6 @@ async function deleteNote(note){
     try{await deleteDoc(doc(privateNotes(),n.id))}catch{}
     try{await deleteDoc(doc(sharedNotes(),n.id))}catch{}
   }else if(n.shared){
-    // Keep the shared source intact; removing another person's shared note globally
-    // would be surprising. For now only local metadata is removed.
   }else{
     try{await deleteDoc(doc(privateNotes(),n.id))}catch{}
   }
@@ -143,7 +155,7 @@ async function seedExampleNotesOnce(){
   const existing=await getDoc(marker);
   if(existing.exists())return false;
   for(const sample of EXAMPLE_NOTES) await saveNote(sample,{previousShared:false});
-  await setDoc(marker,{seeded:true,seededAt:serverTimestamp(),version:1},{merge:true});
+  await setDoc(marker,{seeded:true,seededAt:serverTimestamp(),version:2},{merge:true});
   return true;
 }
 
@@ -159,8 +171,6 @@ function subscribeNotes({onChange,onError}={}){
       if(p){
         out.push({
           ...p,id,
-          // During share/unshare transitions the private doc remains present.
-          // A shared mirror or the private shared flag is enough to mark it shared.
           shared:!!p.shared||!!s,
           tags:Array.isArray(p.tags)?p.tags:[],
           pinned:!!p.pinned
@@ -197,5 +207,5 @@ function subscribeCategories({onChange,onError}={}){
   },e=>onError?.(e));
 }
 
-window.PirulinNotes={normalizeNote,saveNote,deleteNote,seedExampleNotesOnce,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES};
-export {normalizeNote,saveNote,deleteNote,seedExampleNotesOnce,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES};
+window.PirulinNotes={normalizeNote,saveNote,setNoteColor,deleteNote,seedExampleNotesOnce,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES,NOTE_COLORS};
+export {normalizeNote,saveNote,setNoteColor,deleteNote,seedExampleNotesOnce,subscribeNotes,saveCategory,deleteCategory,subscribeCategories,seedCategories,DEFAULT_CATEGORIES,NOTE_COLORS};

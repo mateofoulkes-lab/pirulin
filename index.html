@@ -15,7 +15,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.11.4-dev';
+    const PIRULIN_VERSION = '0.11.5-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{
@@ -44,6 +44,7 @@
           <script type="module" src="./expenses-ui-polish.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./expenses-percent-slider.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./expenses-migration.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./expenses-categories.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./expenses-report.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./expenses-report-motion.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-ui-v3.js?v=${PIRULIN_VERSION}"><\/script>

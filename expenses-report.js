@@ -111,7 +111,13 @@ function renderReport(){
   }
 }
 function reportChartHtml(rows,total,clickable){
-  const legend=rows.map((r,i)=>`<button class="rp-legend-row" ${clickable&&r.label!=='Otros'?`data-category="${escRp(r.label)}"`:''}><span class="rp-dot" style="background:${REPORT_COLORS[i%REPORT_COLORS.length]}"></span><span class="rp-name">${escRp(r.label)}</span><span class="rp-value"><b>${moneyRp.format(r.amount)}</b><small>${total?Math.round(r.amount/total*100):0}% del total · ${r.count} mov.</small><em>Mateo: ${moneyRp.format(r.mateo)} · Dani: ${moneyRp.format(r.dani)}</em></span></button>`).join('');
+  const legend=rows.map((r,i)=>{
+    const totalPct=total?Math.round(r.amount/total*100):0;
+    const splitTotal=(r.mateo||0)+(r.dani||0);
+    const mateoPct=splitTotal?Math.round((r.mateo||0)/splitTotal*100):50;
+    const daniPct=100-mateoPct;
+    return `<button class="rp-legend-row" ${clickable&&r.label!=='Otros'?`data-category="${escRp(r.label)}"`:''}><span class="rp-dot" style="background:${REPORT_COLORS[i%REPORT_COLORS.length]}"></span><span class="rp-name">${escRp(r.label)}</span><span class="rp-value"><b>${moneyRp.format(r.amount)}</b><small>${totalPct}% del total · ${r.count} mov.</small><em>Mateo: ${mateoPct}% · Dani: ${daniPct}%</em></span></button>`;
+  }).join('');
   return `<div class="rp-chart-wrap"><div class="rp-donut" style="background:conic-gradient(${conic(rows,total)})"><div><strong>${moneyRp.format(total)}</strong><small>Total</small></div></div><div class="rp-legend">${legend}</div></div>`;
 }
 

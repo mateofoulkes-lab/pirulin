@@ -24,9 +24,9 @@ function installCompactCards(){
   style.id='expensesCardCompactStyle';
   style.textContent=`
     #gastosSuite .expense-card:not(.settlement-card) .expense-title{gap:0!important}
-    #gastosSuite .expense-card:not(.settlement-card) .expense-meta{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important;margin-top:6px!important}
+    #gastosSuite .expense-card:not(.settlement-card) .expense-meta{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important;margin-top:6px!important;width:100%!important}
     #gastosSuite .expense-card .expense-category-inline{font-size:9px!important;line-height:1.15!important;padding:4px 9px!important;margin:0!important;white-space:nowrap!important;flex:0 0 auto!important}
-    #gastosSuite .expense-card .expense-meta .payer-pill{margin:0!important;white-space:nowrap!important}
+    #gastosSuite .expense-card .expense-meta .payer-pill{margin:0 0 0 auto!important;white-space:nowrap!important;flex:0 0 auto!important}
     #gastosSuite .expense-card:not(.settlement-card) .expense-top{margin-bottom:0!important}
     @media(max-width:380px){
       #gastosSuite .expense-card:not(.settlement-card) .expense-meta{gap:6px!important}

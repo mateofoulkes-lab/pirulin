@@ -17,7 +17,6 @@ function classifyExpense(it={}){
   const rawCat=String(it.cat||'').trim();
   if(CATEGORY_SET.has(rawCat))return rawCat;
   const d=norm(it.desc),c=norm(rawCat);
-
   if(c==='angu'||c==='veterinaria'||has(d,'angu','bravecto','veterinaria','vacunas angu','pelu angu'))return 'Angu';
   if(c==='limpieza'||c==='lim'||has(d,'limpieza valeria')||d==='valeria')return 'Limpieza';
   if(c==='cem'||c==='farmacia'||has(d,'cem','farmacia','bronax','refrianex','atomo','cpap','loperamida','diclofenac','remedio','medicamento'))return 'Salud';
@@ -34,15 +33,25 @@ function classifyExpense(it={}){
   return 'Otros / regalos';
 }
 
+function installSaveGuard(){
+  const api=window.PirulinExpenses;
+  if(!api?.saveExpense)return setTimeout(installSaveGuard,100);
+  if(api.__categoryGuardInstalled)return;
+  const original=api.saveExpense.bind(api);
+  api.saveExpense=async input=>{
+    if(!CATEGORY_SET.has(String(input?.cat||'').trim()))throw new Error('Elegí una categoría.');
+    return original(input);
+  };
+  api.__categoryGuardInstalled=true;
+}
+
 function installCategorySelect(){
   const input=$c('#expenseCategoryMock');
   if(!input)return setTimeout(installCategorySelect,100);
   if(input.tagName==='SELECT')return;
   const select=document.createElement('select');
-  select.id=input.id;
-  select.className=input.className;
-  select.setAttribute('aria-label','Categoría');
-  select.innerHTML=CATEGORIES.map(x=>`<option value="${x}">${x}</option>`).join('');
+  select.id=input.id;select.className=input.className;select.required=true;select.setAttribute('aria-label','Categoría');
+  select.innerHTML='<option value="" disabled selected>Elegí una categoría</option>'+CATEGORIES.map(x=>`<option value="${x}">${x}</option>`).join('');
   input.replaceWith(select);
 
   const modal=$c('#expenseModalMock');
@@ -51,6 +60,8 @@ function installCategorySelect(){
       if(!modal.classList.contains('show'))return;
       const s=$c('#expenseCategoryMock');if(!s)return;
       if(CATEGORY_SET.has(s.value))return;
+      const editing=/editar/i.test($c('#expenseModalMockTitle')?.textContent||'');
+      if(!editing){s.value='';return}
       const desc=$c('#expenseDescMock')?.value||'';
       s.value=classifyExpense({desc,cat:s.value})||'Otros / regalos';
     }).observe(modal,{attributes:true,attributeFilter:['class']});
@@ -66,8 +77,7 @@ async function backfillCategories(){
     const snap=await getDocs(collection(fb.db,'shared','expenses','items'));
     const changes=[];
     snap.forEach(ds=>{
-      const data=ds.data();
-      if(data.settlement)return;
+      const data=ds.data();if(data.settlement)return;
       const cat=classifyExpense(data);
       if(cat&&data.cat!==cat)changes.push({ref:ds.ref,cat});
     });
@@ -80,11 +90,10 @@ async function backfillCategories(){
     finalBatch.set(marker,{version:1,updatedCount:changes.length,completedAt:serverTimestamp(),completedBy:fb.user.uid});
     await finalBatch.commit();
     console.info(`[Pirulín] Categorías históricas normalizadas: ${changes.length}`);
-  }catch(error){
-    console.error('[Pirulín] No pude normalizar categorías históricas',error);
-  }
+  }catch(error){console.error('[Pirulín] No pude normalizar categorías históricas',error)}
 }
 
 window.PirulinExpenseCategories={list:[...CATEGORIES],classify:classifyExpense};
+installSaveGuard();
 installCategorySelect();
 backfillCategories();

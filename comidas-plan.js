@@ -23,7 +23,8 @@ function installPlanUI(){
     #comidasSuite .food-mode-tabs{display:grid;grid-template-columns:1fr 1fr;background:#eef1f5;border-radius:16px;padding:3px;margin:0 0 10px}
     #comidasSuite .food-mode-tabs button{border:0;background:transparent;border-radius:13px;padding:9px;font-size:12px;font-weight:900;color:#858c98;transition:.16s}
     #comidasSuite .food-mode-tabs button.active{background:#fff;color:#363d48;box-shadow:0 4px 12px rgba(28,39,73,.08)}
-    #comidasSuite .food-pane{display:none;min-height:0;flex:1;position:relative}.food-pane.active{display:flex;flex-direction:column}
+    #comidasSuite .food-pane{display:none;min-height:0;flex:1;position:relative}
+    #comidasSuite .food-pane.active{display:flex;flex-direction:column}
     #comidasSuite .plan-datebar{height:48px;display:grid;grid-template-columns:42px 1fr 42px;align-items:center;background:#fff;border:1px solid #eceff4;border-radius:18px;box-shadow:0 7px 20px rgba(29,42,77,.045);margin-bottom:10px}
     #comidasSuite .plan-datebar button{border:0;background:transparent;font-size:25px;color:#687185}.plan-datebar label{text-align:center;position:relative}.plan-datebar strong{font-size:14px}.plan-datebar input{position:absolute;inset:0;opacity:0;width:100%}
     #comidasSuite .plan-scroll{flex:1;overflow:auto;padding-bottom:100px;scrollbar-width:none}.plan-scroll::-webkit-scrollbar{display:none}

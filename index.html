@@ -15,7 +15,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.11.11-dev';
+    const PIRULIN_VERSION = '0.12.0-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{
@@ -37,6 +37,7 @@
           <script type="module" src="./tasks-repository.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-repository.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./expenses-repository.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./comidas-repository.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-preferences.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-advanced.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-live-adapter.js?v=${PIRULIN_VERSION}"><\/script>
@@ -57,6 +58,7 @@
           <script type="module" src="./notes-colors.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-keep-polish.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-menu-dismiss.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./comidas-live.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./subapp-transitions.js?v=${PIRULIN_VERSION}"><\/script>`;
         html=html.replace('</head>',appHead+'</head>').replace('</body>',appScripts+'</body>');
         document.open();document.write(html);document.close();

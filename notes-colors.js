@@ -29,28 +29,35 @@ function randomColor(){return NOTE_COLOR_KEYS[Math.floor(Math.random()*NOTE_COLO
 function ensureSelector(){
   const modal=document.querySelector('#noteModal');
   if(!modal)return null;
-  let select=document.querySelector('#noteColorInput');
-  if(select)return select;
+  let input=document.querySelector('#noteColorInput');
+  if(input)return input;
   const anchor=document.querySelector('#notePinInput')?.closest('.note-pref')||document.querySelector('#noteShareInput')?.closest('.note-pref');
   if(!anchor)return null;
-  const row=document.createElement('label');
+  const row=document.createElement('div');
   row.className='note-pref note-color-pref';
-  row.innerHTML=`<span>Color</span><select id="noteColorInput" aria-label="Color de la nota">${NOTE_COLOR_KEYS.map(k=>`<option value="${k}">${NOTE_COLOR_PALETTES[k].label}</option>`).join('')}</select>`;
+  row.innerHTML=`<span>Color</span><div class="note-color-swatches" role="radiogroup" aria-label="Color de la nota">${NOTE_COLOR_KEYS.map(k=>`<button type="button" class="note-color-swatch" data-note-color="${k}" aria-label="${NOTE_COLOR_PALETTES[k].label}" role="radio" aria-checked="false" style="--swatch-bg:${NOTE_COLOR_PALETTES[k].bg};--swatch-head:${NOTE_COLOR_PALETTES[k].head}"></button>`).join('')}</div><input id="noteColorInput" type="hidden">`;
   anchor.insertAdjacentElement('afterend',row);
-  select=row.querySelector('select');
-  select.addEventListener('change',()=>{currentNewColor=select.value;paintSelector(select.value)});
-  return select;
+  input=row.querySelector('#noteColorInput');
+  row.querySelectorAll('.note-color-swatch').forEach(btn=>btn.addEventListener('click',()=>{
+    input.value=btn.dataset.noteColor;
+    currentNewColor=input.value;
+    paintSelector(input.value);
+  }));
+  return input;
 }
 function paintSelector(key){
-  const select=document.querySelector('#noteColorInput');
-  const p=NOTE_COLOR_PALETTES[validColor(key)||'yellow'];
-  if(select){select.style.background=p.bg;select.style.borderColor=p.head;}
+  const active=validColor(key)||'yellow';
+  document.querySelectorAll('#noteModal .note-color-swatch').forEach(btn=>{
+    const on=btn.dataset.noteColor===active;
+    btn.classList.toggle('active',on);
+    btn.setAttribute('aria-checked',on?'true':'false');
+  });
 }
 function prepareEditorColor(){
-  const select=ensureSelector();if(!select)return;
+  const input=ensureSelector();if(!input)return;
   const id=editingId(),note=id?noteById(id):null;
   const key=validColor(note?.color)||(note?fallbackColor(note):(currentNewColor=randomColor()));
-  select.value=key;paintSelector(key);
+  input.value=key;paintSelector(key);
 }
 function paintCards(){
   const map=new Map(notes().map(n=>[String(n.id),n]));
@@ -90,8 +97,12 @@ function patchSave(){
 function installStyles(){
   if(document.querySelector('#noteColorStyles'))return;
   const style=document.createElement('style');style.id='noteColorStyles';style.textContent=`
-    #noteModal .note-color-pref{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
-    #noteModal .note-color-pref select{min-width:132px;border:1px solid #e1e5ec;border-radius:12px;padding:8px 34px 8px 11px;color:#434a56;font:800 12px Nunito,system-ui,sans-serif;outline:none;transition:background-color .16s ease,border-color .16s ease}
+    #noteModal .note-color-pref{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;min-width:0!important}
+    #noteModal .note-color-swatches{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;flex-wrap:nowrap}
+    #noteModal .note-color-swatch{width:27px;height:27px;flex:0 0 27px;border-radius:50%;border:2px solid rgba(72,78,90,.10);background:linear-gradient(180deg,var(--swatch-head) 0 42%,var(--swatch-bg) 42% 100%);padding:0;box-shadow:0 1px 3px rgba(30,38,54,.06);position:relative;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
+    #noteModal .note-color-swatch.active{transform:scale(1.08);border-color:#626b7b;box-shadow:0 0 0 2px #fff,0 0 0 4px rgba(98,107,123,.20)}
+    #noteModal .note-color-swatch:active{transform:scale(.94)}
+    @media(max-width:370px){#noteModal .note-color-swatches{gap:5px}#noteModal .note-color-swatch{width:24px;height:24px;flex-basis:24px}}
   `;document.head.appendChild(style);
 }
 function install(){

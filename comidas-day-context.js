@@ -45,20 +45,27 @@ function decorateSummary(day,tot){
   const stats=[...document.querySelectorAll('#foodRegisterPane .food-summary .food-stat')];if(stats.length<3)return;
   const third=stats[2],icon=activityIcon(day),weight=day?.weightKg;
   third.classList.add('food-weight-activity-stat');
-  const html=`<div class="food-weight-line"><b>${weight?fmt(weight)+' kg':'—'}</b>${icon?`<span class="food-activity-badge" title="Actividad registrada">${icon}</span>`:''}</div><span>${weight?'peso':'sin peso'}${icon?` · ${tot.exerciseMin?tot.exerciseMin+' min':'actividad'}`:''}</span>`;
+  const activity=icon?`<span class="food-activity-inline" title="Actividad registrada"><span class="food-activity-badge">${icon}</span>${tot.exerciseMin?`<small>${tot.exerciseMin} min</small>`:''}</span>`:`<span class="food-no-activity" title="Sin actividad">—</span>`;
+  const html=`<div class="food-weight-line"><b>${weight?fmt(weight)+' kg':'Sin peso'}</b>${activity}</div><span>peso · actividad</span>`;
   if(third.innerHTML!==html)third.innerHTML=html;
+}
+function ensureTargetFooter(card,text){
+  let footer=card.querySelector('.food-daily-target');
+  if(!footer){footer=document.createElement('div');footer.className='food-daily-target';card.appendChild(footer)}
+  if(footer.textContent!==text)footer.textContent=text;
 }
 function decorateScales(day,t,tot){
   const cards=[...document.querySelectorAll('#foodRegisterPane .food-scale-card')];if(cards.length<2)return;
   const values=[
-    {value:tot.kcal,unit:'kcal',status:calorieStatus(tot.kcal,t),pct:markerPct(tot.kcal,[t.calorieLow*.72,t.calorieLow,t.calorieHigh,t.maintenance*1.05]),range:`objetivo ${fmt(t.calorieLow)}–${fmt(t.calorieHigh)}`},
-    {value:tot.protein,unit:'g',status:proteinStatus(tot.protein,t),pct:markerPct(tot.protein,[t.proteinLow*.65,t.proteinLow,t.proteinHigh*.92,t.proteinHigh*1.08]),range:`objetivo ${fmt(t.proteinLow)}–${fmt(t.proteinHigh)}`}
+    {value:tot.kcal,unit:'kcal',status:calorieStatus(tot.kcal,t),pct:markerPct(tot.kcal,[t.calorieLow*.72,t.calorieLow,t.calorieHigh,t.maintenance*1.05]),target:`Objetivo del día: ${fmt(t.calorieLow)}–${fmt(t.calorieHigh)} kcal`},
+    {value:tot.protein,unit:'g',status:proteinStatus(tot.protein,t),pct:markerPct(tot.protein,[t.proteinLow*.65,t.proteinLow,t.proteinHigh*.92,t.proteinHigh*1.08]),target:`Objetivo del día: ${fmt(t.proteinLow)}–${fmt(t.proteinHigh)} g`}
   ];
   cards.slice(0,2).forEach((card,i)=>{
     const v=values[i],head=card.querySelector('.food-scale-head span'),marker=card.querySelector('.food-marker');
-    const html=`${fmt(v.value)} ${v.unit} · ${v.status}<small class="food-saved-target">${v.range}</small>`;
+    const html=`${fmt(v.value)} ${v.unit} · ${v.status}`;
     if(head&&head.innerHTML!==html)head.innerHTML=html;
     if(marker)marker.style.left=`${v.pct}%`;
+    ensureTargetFooter(card,v.target);
   });
   const reco=document.querySelector('#foodRegisterPane .food-reco'),text=recommendation(day,t,tot);
   if(reco&&reco.textContent!==text)reco.textContent=text;
@@ -85,10 +92,13 @@ async function backfillMissingTargets(){
 function styles(){
   if(document.querySelector('#comidasDayContextStyle'))return;
   const s=document.createElement('style');s.id='comidasDayContextStyle';s.textContent=`
-    #foodRegisterPane .food-weight-line{display:flex;align-items:center;justify-content:center;gap:6px;min-height:25px}
-    #foodRegisterPane .food-weight-line b{font-size:17px!important;white-space:nowrap}
+    #foodRegisterPane .food-weight-line{display:flex;align-items:center;justify-content:center;gap:8px;min-height:28px}
+    #foodRegisterPane .food-weight-line b{font-size:16px!important;white-space:nowrap}
+    #foodRegisterPane .food-activity-inline{display:flex;align-items:center;gap:4px}
+    #foodRegisterPane .food-activity-inline small{font-size:8.5px;font-weight:900;color:#77808c;white-space:nowrap}
     #foodRegisterPane .food-activity-badge{width:25px;height:25px;border-radius:9px;background:#eaf6f1;display:grid;place-items:center;font-size:14px;box-shadow:inset 0 0 0 1px rgba(44,139,105,.08)}
-    #foodRegisterPane .food-saved-target{display:block;margin-top:2px;color:#a0a6b0;font-size:8.5px;font-weight:800}
+    #foodRegisterPane .food-no-activity{font-size:18px;font-weight:800;color:#adb3bc;line-height:1}
+    #foodRegisterPane .food-daily-target{margin-top:9px;padding-top:8px;border-top:1px solid #f0f1f4;text-align:center;color:#8d949f;font-size:9.5px;font-weight:900}
   `;document.head.appendChild(s);
 }
 function install(){

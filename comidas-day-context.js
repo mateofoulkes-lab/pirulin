@@ -74,7 +74,15 @@ function decorateScales(day,t,tot){
 function decorate(){
   if(decorating)return;decorating=true;
   try{
-    const day=dayFor();if(!day||!document.querySelector('#foodRegisterPane'))return;
+    if(!document.querySelector('#foodRegisterPane'))return;
+    const day=dayFor();
+    if(!day){
+      const reco=document.querySelector('#foodRegisterPane .food-reco');
+      if(reco&&reco.textContent!=='Alimentación aún no registrada')reco.textContent='Alimentación aún no registrada';
+      const fake={date:currentDate(),foods:[],supplements:[],exercise:[],weightKg:null};
+      decorateSummary(fake,{kcal:0,protein:0,exerciseMin:0});
+      return;
+    }
     const t=targetsFor(day)||profileTargetsFor(day),tot=window.PirulinComidas?.totals?.(day);if(!t||!tot)return;
     decorateSummary(day,tot);decorateScales(day,t,tot);
   }finally{decorating=false}

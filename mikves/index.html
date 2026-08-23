@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mikves · Fase 2 · Plan</title>
+  <style>
+    :root{--bg:#f6f7fb;--panel:#fff;--ink:#1f2430;--muted:#747b88;--line:#e7e9f0;--accent:#6f63ff;--accent2:#9a93ff;--green:#2eb67d;--amber:#f0a72f;--red:#e85d68;--blue:#4f8cff;--row:58px;--day:28px;--left:330px;--shadow:0 14px 40px rgba(40,46,70,.09)}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.hidden{display:none!important}
+    button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{min-height:100vh}.top{position:sticky;top:0;z-index:20;background:rgba(246,247,251,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+    .topin{max-width:1600px;margin:auto;padding:18px 24px 14px;display:flex;gap:16px;align-items:flex-start;justify-content:space-between}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}h1{font-size:28px;line-height:1.05;margin:3px 0 5px}.sub{font-size:13px;color:var(--muted)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 12px;border-radius:12px;font-weight:750;box-shadow:0 2px 8px rgba(40,46,70,.03)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.danger{color:var(--red)}
+    .stats{max-width:1600px;margin:18px auto 14px;padding:0 24px;display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:0 5px 20px rgba(40,46,70,.035)}.stat b{display:block;font-size:22px}.stat span{font-size:12px;color:var(--muted)}
+    .progressStrip{max-width:1600px;margin:0 auto 14px;padding:0 24px}.progressCard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;gap:14px;align-items:center}.track{height:10px;flex:1;border-radius:999px;background:#eceef5;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px}.small{font-size:12px;color:var(--muted)}
+    .boardWrap{max-width:1600px;margin:0 auto;padding:0 24px 30px}.board{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}.toolbar{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;justify-content:space-between}.filters{display:flex;gap:6px}.chip{border:1px solid var(--line);background:#fff;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:750;color:var(--muted)}.chip.active{background:#efedff;border-color:#d8d3ff;color:#4d43d4}
+    .ganttScroll{overflow:auto;max-height:calc(100vh - 300px)}.gantt{min-width:calc(var(--left) + 76 * var(--day));position:relative}.headrow,.taskrow{display:grid;grid-template-columns:var(--left) 1fr}.headrow{position:sticky;top:0;z-index:12;background:#fff;border-bottom:1px solid var(--line)}.leftHead{position:sticky;left:0;z-index:14;background:#fff;padding:12px 14px;border-right:1px solid var(--line);font-size:12px;font-weight:800;color:var(--muted)}
+    .timelineHead{height:54px;position:relative;background-image:linear-gradient(to right,transparent calc(100% - 1px),#eceef4 0);background-size:var(--day) 100%}.weekLabel{position:absolute;top:6px;font-size:11px;font-weight:800;color:#596071;white-space:nowrap}.dayLabel{position:absolute;bottom:5px;width:var(--day);text-align:center;font-size:10px;color:#8b91a0}.dayLabel.weekend{background:#fafafa;color:#b0b4be}.todayHead{position:absolute;top:0;bottom:0;width:2px;background:#ff6a74;z-index:4}
+    .taskrow{min-height:var(--row);border-bottom:1px solid #f0f1f5}.taskrow:last-child{border-bottom:0}.taskinfo{position:sticky;left:0;z-index:8;background:#fff;border-right:1px solid var(--line);display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;padding:8px 10px}.taskrow.dim .taskinfo,.taskrow.dim .lane{opacity:.35}.check{width:20px;height:20px}.taskname{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.taskmeta{font-size:11px;color:var(--muted);margin-top:2px}.hours{font-size:11px;font-weight:800;color:#646b79}.lane{position:relative;min-height:var(--row);background-image:linear-gradient(to right,transparent calc(100% - 1px),#f0f1f5 0);background-size:var(--day) 100%}.weekendBand{position:absolute;top:0;bottom:0;background:#fafafa;pointer-events:none}.todayLine{position:absolute;top:0;bottom:0;width:2px;background:#ff6a74;opacity:.85;z-index:3;pointer-events:none}
+    .bar{position:absolute;top:13px;height:32px;border-radius:9px;background:var(--blue);color:#fff;display:flex;align-items:center;overflow:hidden;box-shadow:0 5px 14px rgba(45,90,190,.18);touch-action:none;user-select:none;z-index:5;min-width:var(--day)}.bar.done{background:var(--green)}.bar.blocked{background:var(--red)}.bar.todo{background:#8c93a3}.bar.in_progress{background:var(--accent)}.bar .barProgress{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.18);pointer-events:none}.barText{position:relative;z-index:2;font-size:11px;font-weight:800;padding:0 11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;pointer-events:none}.handle{position:absolute;top:0;bottom:0;width:10px;z-index:6}.handle.left{left:0;cursor:ew-resize}.handle.right{right:0;cursor:ew-resize}.bar.dragging{outline:3px solid rgba(111,99,255,.18);filter:saturate(1.2)}
+    .empty{padding:40px;text-align:center;color:var(--muted)}
+    .drawer{position:fixed;right:0;top:0;bottom:0;width:min(430px,100vw);z-index:50;background:#fff;border-left:1px solid var(--line);box-shadow:-20px 0 50px rgba(33,38,55,.12);padding:22px;overflow:auto}.drawerBack{position:fixed;inset:0;background:rgba(21,24,33,.22);z-index:49}.drawer h2{margin:3px 0 16px}.field{margin:12px 0}.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:850;color:var(--muted);margin-bottom:5px}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 11px;background:#fff;color:var(--ink)}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:9px}.rangeLine{display:flex;align-items:center;gap:10px}.rangeLine input[type=range]{flex:1}.drawerBtns{display:flex;gap:8px;margin-top:18px}.note{font-size:12px;color:var(--muted);line-height:1.45;background:#f7f7fb;border-radius:12px;padding:10px 12px}
+    .login{position:fixed;inset:0;z-index:100;background:linear-gradient(145deg,#f5f4ff,#f8f9fc 55%,#eef6ff);display:grid;place-items:center;padding:20px}.loginCard{width:min(390px,100%);background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);border-radius:24px;padding:28px;text-align:center}.loginCard h2{font-size:25px;margin:7px 0}.google{margin-top:18px;width:100%;padding:12px;border-radius:13px;border:1px solid var(--line);background:#fff;font-weight:800}.sync{font-size:11px;color:var(--muted);margin-left:8px}
+    @media(max-width:800px){:root{--left:245px;--day:24px}.topin{padding:14px 14px}.stats{grid-template-columns:repeat(2,1fr);padding:0 14px}.stats .stat:last-child{grid-column:1/-1}.progressStrip,.boardWrap{padding-left:14px;padding-right:14px}.actions .btn:not(.primary){display:none}.ganttScroll{max-height:calc(100vh - 360px)}.taskname{font-size:12px}.hours{display:none}}
+  </style>
+</head>
+<body>
+  <div id="login" class="login">
+    <div class="loginCard">
+      <div class="eyebrow">Pirulín · proyectos</div>
+      <h2>Mikves · Fase 2</h2>
+      <div class="sub">Planificación y seguimiento privado usando la misma Firebase de Pirulín.</div>
+      <button id="googleLogin" class="google">Entrar con Google</button>
+    </div>
+  </div>
+
+  <main id="app" class="shell hidden">
+    <header class="top">
+      <div class="topin">
+        <div><div class="eyebrow">Mikves · fase 2</div><h1>Plan de producción Quest 3 / 3S</h1><div class="sub">03 ago 2026 → 17 oct 2026 · Arrastrá para mover · estirá los bordes para cambiar duración</div></div>
+        <div class="actions"><button id="todayBtn" class="btn">Ir a hoy</button><button id="resetBtn" class="btn">Restaurar plan base</button><button id="addBtn" class="btn primary">+ Tarea</button></div>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><b id="daysLeft">—</b><span>días hasta entrega</span></div>
+      <div class="stat"><b id="donePct">—</b><span>avance ponderado</span></div>
+      <div class="stat"><b id="hoursLeft">—</b><span>horas estimadas restantes</span></div>
+      <div class="stat"><b id="pace">—</b><span>h/día necesarias desde hoy</span></div>
+      <div class="stat"><b id="risk">—</b><span>estado del plan</span></div>
+    </section>
+    <section class="progressStrip"><div class="progressCard"><b id="progressText">Progreso</b><div class="track"><div id="progressFill" class="fill" style="width:0%"></div></div><span id="syncState" class="sync">Firebase</span></div></section>
+
+    <div class="boardWrap"><section class="board">
+      <div class="toolbar"><div class="filters"><button class="chip active" data-filter="all">Todas</button><button class="chip" data-filter="open">Pendientes</button><button class="chip" data-filter="done">Hechas</button></div><div class="small">Tip: clic en una barra o tarea para editar todos los datos.</div></div>
+      <div id="ganttScroll" class="ganttScroll"><div id="gantt" class="gantt"></div></div>
+    </section></div>
+  </main>
+
+  <div id="drawerBack" class="drawerBack hidden"></div>
+  <aside id="drawer" class="drawer hidden">
+    <div class="eyebrow">Editar tarea</div><h2 id="drawerTitle">Tarea</h2>
+    <div class="field"><label>Nombre</label><input id="fName"></div>
+    <div class="twocol"><div class="field"><label>Estado</label><select id="fStatus"><option value="todo">Pendiente</option><option value="in_progress">En curso</option><option value="blocked">Bloqueada</option><option value="done">Hecha</option></select></div><div class="field"><label>Área</label><input id="fArea"></div></div>
+    <div class="twocol"><div class="field"><label>Inicio</label><input id="fStart" type="date"></div><div class="field"><label>Fin</label><input id="fEnd" type="date"></div></div>
+    <div class="twocol"><div class="field"><label>Horas estimadas</label><input id="fEst" type="number" min="0" step="0.5"></div><div class="field"><label>Horas reales</label><input id="fActual" type="number" min="0" step="0.5"></div></div>
+    <div class="field"><label>Progreso</label><div class="rangeLine"><input id="fProgress" type="range" min="0" max="100" step="5"><b id="fProgressLabel">0%</b></div></div>
+    <div class="field"><label>Notas</label><textarea id="fNotes" rows="4"></textarea></div>
+    <div class="note">Las fechas también se pueden modificar directamente en el Gantt: arrastrá el centro para mover la tarea completa o los extremos para cambiar inicio/fin.</div>
+    <div class="drawerBtns"><button id="saveTaskBtn" class="btn primary">Guardar</button><button id="deleteTaskBtn" class="btn danger">Eliminar</button><button id="closeDrawerBtn" class="btn">Cerrar</button></div>
+  </aside>
+
+  <script type="module" src="./firebase-client.js"></script>
+  <script type="module">
+    import {doc,getDoc,setDoc,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+
+    const PROJECT_START='2026-08-03', PROJECT_END='2026-10-17', DAY_MS=86400000;
+    const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
+    const fmt=n=>new Intl.NumberFormat('es-AR',{maximumFractionDigits:1}).format(n);
+    const parse=s=>new Date(s+'T12:00:00'); const iso=d=>{const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`};
+    const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)}; const diff=(a,b)=>Math.round((parse(b)-parse(a))/DAY_MS); const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+    const projectDays=diff(PROJECT_START,PROJECT_END)+1;
+
+    const BASE_TASKS=[
+      {id:'setup',name:'Setup Unity 6.3 + Quest + OpenXR',area:'Base técnica',start:'2026-08-03',end:'2026-08-06',status:'done',progress:100,estimatedHours:12,actualHours:12,notes:'Proyecto base, conexión Quest, XR Simulator y OpenXR.'},
+      {id:'environment',name:'Importar entorno MOTZA y ordenar escena',area:'Entorno',start:'2026-08-04',end:'2026-08-12',status:'done',progress:100,estimatedHours:18,actualHours:18,notes:'Playa, túnel, mikve y salida importados.'},
+      {id:'colliders',name:'Colliders, materiales y texturas',area:'Entorno',start:'2026-08-08',end:'2026-08-15',status:'done',progress:100,estimatedHours:18,actualHours:18,notes:'Primera pasada funcional del escenario.'},
+      {id:'visual',name:'Agua + AA + bloom + skybox + postprocesado',area:'Visual',start:'2026-08-12',end:'2026-08-16',status:'done',progress:100,estimatedHours:10,actualHours:10,notes:'Incluye corrección del shader de agua y aliasing general.'},
+      {id:'xr',name:'XR rig, locomoción, manos y controladores',area:'Interacción',start:'2026-08-17',end:'2026-08-27',status:'in_progress',progress:25,estimatedHours:12,actualHours:3,notes:'Locomoción con sticks y base de manos/rig.'},
+      {id:'bake1',name:'Primer bake + performance Quest',area:'Optimización',start:'2026-08-24',end:'2026-09-01',status:'todo',progress:0,estimatedHours:10,actualHours:0,notes:'Bake inicial, iluminación y presupuesto de rendimiento.'},
+      {id:'language',name:'Menú de idiomas + estado global',area:'Sistemas',start:'2026-08-28',end:'2026-09-05',status:'todo',progress:0,estimatedHours:10,actualHours:0,notes:'6 sedes/idiomas y persistencia del idioma durante el recorrido.'},
+      {id:'portals',name:'Portales conservando idioma',area:'Sistemas',start:'2026-09-03',end:'2026-09-07',status:'todo',progress:0,estimatedHours:6,actualHours:0,notes:'Transiciones entre espacios sin perder contexto de idioma.'},
+      {id:'panels',name:'Cuadros ampliables + títulos',area:'Contenido',start:'2026-09-05',end:'2026-09-11',status:'todo',progress:0,estimatedHours:10,actualHours:0,notes:'Interacción cómoda en VR para imágenes y textos.'},
+      {id:'npcs',name:'NPCs: pipeline, colocación y animaciones',area:'NPC',start:'2026-09-07',end:'2026-09-18',status:'todo',progress:0,estimatedHours:16,actualHours:0,notes:'Preparar NPCs, estados y animaciones necesarias.'},
+      {id:'audio',name:'Importar y mapear audios de 6 idiomas',area:'Audio',start:'2026-09-11',end:'2026-09-22',status:'todo',progress:0,estimatedHours:12,actualHours:0,notes:'Asignación por sede/idioma y disparadores.'},
+      {id:'lipsync',name:'Lipsync simple de NPCs',area:'NPC',start:'2026-09-16',end:'2026-09-25',status:'todo',progress:0,estimatedHours:10,actualHours:0,notes:'Sin buscar perfección facial; priorizar lectura clara y estabilidad.'},
+      {id:'watch',name:'Reloj de muñeca',area:'Interacción',start:'2026-09-22',end:'2026-09-27',status:'todo',progress:0,estimatedHours:8,actualHours:0,notes:'UI/objeto de muñeca integrado al rig.'},
+      {id:'license',name:'Licencia anual con hash',area:'Entrega',start:'2026-09-24',end:'2026-10-01',status:'todo',progress:0,estimatedHours:8,actualHours:0,notes:'Mecanismo simple, comprobable y mantenible.'},
+      {id:'polish',name:'Bake final + optimización + pulido visual',area:'Optimización',start:'2026-09-27',end:'2026-10-05',status:'todo',progress:0,estimatedHours:12,actualHours:0,notes:'Performance objetivo Quest 3/3S y revisión de luces/materiales.'},
+      {id:'builds',name:'Builds Quest 3 / 3S + instalación',area:'Entrega',start:'2026-10-02',end:'2026-10-07',status:'todo',progress:0,estimatedHours:8,actualHours:0,notes:'Build reproducible y prueba en hardware.'},
+      {id:'qa',name:'QA completo: idiomas, portales, NPC, audio',area:'QA',start:'2026-10-05',end:'2026-10-12',status:'todo',progress:0,estimatedHours:14,actualHours:0,notes:'Recorridos completos por cada combinación importante.'},
+      {id:'bugs',name:'Correcciones finales + performance + UX',area:'QA',start:'2026-10-10',end:'2026-10-15',status:'todo',progress:0,estimatedHours:12,actualHours:0,notes:'Buffer real para bugs encontrados en QA.'},
+      {id:'delivery',name:'Paquete de entrega + documentación + release',area:'Entrega',start:'2026-10-15',end:'2026-10-17',status:'todo',progress:0,estimatedHours:6,actualHours:0,notes:'APK/build final, instrucciones y respaldo.'}
+    ];
+
+    let state={tasks:structuredClone(BASE_TASKS),filter:'all',selected:null,docRef:null,unsubscribe:null,saving:false,loaded:false};
+    const normalizeTask=t=>({id:t.id||crypto.randomUUID(),name:t.name||'Nueva tarea',area:t.area||'General',start:t.start||PROJECT_START,end:t.end||t.start||PROJECT_START,status:t.status||'todo',progress:Number(t.progress||0),estimatedHours:Number(t.estimatedHours||0),actualHours:Number(t.actualHours||0),notes:t.notes||''});
+
+    function visibleTasks(){return state.tasks.filter(t=>state.filter==='all'||(state.filter==='done'?t.status==='done':t.status!=='done'))}
+    function calcStats(){
+      const today=iso(new Date()), daysLeft=Math.max(0,diff(today,PROJECT_END));
+      const totalEst=state.tasks.reduce((s,t)=>s+Number(t.estimatedHours||0),0)||1;
+      const earned=state.tasks.reduce((s,t)=>s+Number(t.estimatedHours||0)*clamp(Number(t.progress||0),0,100)/100,0);
+      const pct=clamp(earned/totalEst*100,0,100);
+      const left=state.tasks.reduce((s,t)=>s+Number(t.estimatedHours||0)*(1-clamp(Number(t.progress||0),0,100)/100),0);
+      const pace=daysLeft?left/daysLeft:left;
+      const late=state.tasks.filter(t=>t.status!=='done'&&t.end<today).length;
+      q('#daysLeft').textContent=daysLeft; q('#donePct').textContent=`${Math.round(pct)}%`; q('#hoursLeft').textContent=`${fmt(left)} h`; q('#pace').textContent=`${fmt(pace)} h`;
+      q('#risk').textContent=late?`${late} atrasada${late>1?'s':''}`:(pace<=3?'En ritmo':'Exigente'); q('#risk').style.color=late?'var(--red)':pace<=3?'var(--green)':'var(--amber)';
+      q('#progressFill').style.width=pct+'%'; q('#progressText').textContent=`Progreso ${Math.round(pct)}% · ${state.tasks.filter(t=>t.status==='done').length}/${state.tasks.length} tareas completas`;
+    }
+
+    function render(){calcStats();renderGantt();}
+    function renderGantt(){
+      const root=q('#gantt'); root.innerHTML='';
+      const head=document.createElement('div'); head.className='headrow'; head.innerHTML='<div class="leftHead">TAREA · ESTADO · HORAS</div><div class="timelineHead" id="timelineHead"></div>'; root.append(head);
+      const th=q('#timelineHead');
+      for(let i=0;i<projectDays;i++){const date=addDays(PROJECT_START,i),d=parse(date),lab=document.createElement('div');lab.className='dayLabel'+([0,6].includes(d.getDay())?' weekend':'');lab.style.left=`calc(${i} * var(--day))`;lab.textContent=d.getDate();th.append(lab);if(d.getDay()===1||i===0){const w=document.createElement('div');w.className='weekLabel';w.style.left=`calc(${i} * var(--day) + 3px)`;w.textContent=d.toLocaleDateString('es-AR',{day:'2-digit',month:'short'});th.append(w)}}
+      addTodayLine(th,'todayHead');
+      const tasks=visibleTasks(); if(!tasks.length){const e=document.createElement('div');e.className='empty';e.textContent='No hay tareas en este filtro.';root.append(e);return}
+      tasks.forEach(t=>root.append(makeRow(t)));
+    }
+
+    function addTodayLine(parent,cls){const today=iso(new Date());if(today<PROJECT_START||today>PROJECT_END)return;const el=document.createElement('div');el.className=cls;el.style.left=`calc(${diff(PROJECT_START,today)} * var(--day))`;parent.append(el)}
+    function makeRow(t){
+      const row=document.createElement('div');row.className='taskrow';row.dataset.id=t.id;
+      const info=document.createElement('div');info.className='taskinfo';info.innerHTML=`<input class="check" type="checkbox" ${t.status==='done'?'checked':''}><div class="clickInfo"><div class="taskname"></div><div class="taskmeta">${escapeHtml(t.area)} · ${labelStatus(t.status)} · ${t.progress}%</div></div><div class="hours">${fmt(t.estimatedHours)} h</div>`;info.querySelector('.taskname').textContent=t.name;
+      info.querySelector('.clickInfo').onclick=()=>openDrawer(t.id); info.querySelector('.check').onchange=e=>{t.status=e.target.checked?'done':'todo';t.progress=e.target.checked?100:Math.min(t.progress,95);markDirty();render()};
+      const lane=document.createElement('div');lane.className='lane';
+      for(let i=0;i<projectDays;i++){const d=parse(addDays(PROJECT_START,i));if([0,6].includes(d.getDay())){const band=document.createElement('div');band.className='weekendBand';band.style.left=`calc(${i} * var(--day))`;band.style.width='var(--day)';lane.append(band)}}addTodayLine(lane,'todayLine');
+      const s=clamp(diff(PROJECT_START,t.start),0,projectDays-1), e=clamp(diff(PROJECT_START,t.end),0,projectDays-1), width=Math.max(1,e-s+1);
+      const bar=document.createElement('div');bar.className=`bar ${t.status}`;bar.style.left=`calc(${s} * var(--day) + 2px)`;bar.style.width=`calc(${width} * var(--day) - 4px)`;bar.innerHTML=`<div class="barProgress" style="width:${clamp(t.progress,0,100)}%"></div><span class="barText"></span><span class="handle left"></span><span class="handle right"></span>`;bar.querySelector('.barText').textContent=t.name;bar.ondblclick=()=>openDrawer(t.id);installDrag(bar,t);lane.append(bar);
+      row.append(info,lane);return row;
+    }
+    function labelStatus(s){return({todo:'Pendiente',in_progress:'En curso',blocked:'Bloqueada',done:'Hecha'})[s]||s}
+    function escapeHtml(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+
+    function installDrag(bar,t){
+      const startDrag=(ev,mode)=>{ev.preventDefault();ev.stopPropagation();bar.setPointerCapture?.(ev.pointerId);bar.classList.add('dragging');const x0=ev.clientX,origS=t.start,origE=t.end,duration=diff(origS,origE);
+        const move=e=>{const day=Math.round((e.clientX-x0)/parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--day')));if(!day)return; if(mode==='move'){let ns=addDays(origS,day),ne=addDays(origE,day);if(ns<PROJECT_START){const fix=diff(ns,PROJECT_START);ns=addDays(ns,fix);ne=addDays(ne,fix)}if(ne>PROJECT_END){const fix=diff(PROJECT_END,ne);ns=addDays(ns,-fix);ne=addDays(ne,-fix)}t.start=ns;t.end=ne}else if(mode==='left'){t.start=addDays(origS,day);if(t.start<PROJECT_START)t.start=PROJECT_START;if(diff(t.start,origE)<0)t.start=origE}else{t.end=addDays(origE,day);if(t.end>PROJECT_END)t.end=PROJECT_END;if(diff(origS,t.end)<0)t.end=origS}renderGantt()};
+        const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);markDirty();render()};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up,{once:true})};
+      bar.addEventListener('pointerdown',e=>{if(e.target.classList.contains('left'))startDrag(e,'left');else if(e.target.classList.contains('right'))startDrag(e,'right');else startDrag(e,'move')});
+    }
+
+    function openDrawer(id){state.selected=id;const t=state.tasks.find(x=>x.id===id);if(!t)return;q('#drawerTitle').textContent=t.name;q('#fName').value=t.name;q('#fArea').value=t.area;q('#fStatus').value=t.status;q('#fStart').value=t.start;q('#fEnd').value=t.end;q('#fEst').value=t.estimatedHours;q('#fActual').value=t.actualHours;q('#fProgress').value=t.progress;q('#fProgressLabel').textContent=t.progress+'%';q('#fNotes').value=t.notes;q('#drawer').classList.remove('hidden');q('#drawerBack').classList.remove('hidden')}
+    function closeDrawer(){q('#drawer').classList.add('hidden');q('#drawerBack').classList.add('hidden');state.selected=null}
+    function saveDrawer(){const t=state.tasks.find(x=>x.id===state.selected);if(!t)return;t.name=q('#fName').value.trim()||'Tarea';t.area=q('#fArea').value.trim()||'General';t.status=q('#fStatus').value;t.start=q('#fStart').value||PROJECT_START;t.end=q('#fEnd').value||t.start;if(t.end<t.start)t.end=t.start;t.estimatedHours=Number(q('#fEst').value||0);t.actualHours=Number(q('#fActual').value||0);t.progress=Number(q('#fProgress').value||0);t.notes=q('#fNotes').value;if(t.status==='done')t.progress=100;markDirty();render();closeDrawer()}
+    function addTask(){const id=crypto.randomUUID(),today=iso(new Date()),start=clampDate(today),t={id,name:'Nueva tarea',area:'General',start,end:addDays(start,2),status:'todo',progress:0,estimatedHours:3,actualHours:0,notes:''};state.tasks.push(t);markDirty();render();openDrawer(id)}
+    function clampDate(s){return s<PROJECT_START?PROJECT_START:s>PROJECT_END?PROJECT_END:s}
+
+    let saveTimer=null;function markDirty(){q('#syncState').textContent='Guardando…';clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,450)}
+    async function saveNow(){if(!state.docRef)return;state.saving=true;try{await setDoc(state.docRef,{version:1,project:{name:'Mikves Fase 2',start:PROJECT_START,end:PROJECT_END},tasks:state.tasks.map(normalizeTask),updatedAt:serverTimestamp()},{merge:true});q('#syncState').textContent='Guardado'}catch(e){console.error(e);q('#syncState').textContent='Error al guardar'}finally{state.saving=false}}
+
+    async function attachFirebase(uid){
+      const fb=window.PirulinFirebase;if(!fb?.db)return;state.docRef=doc(fb.db,'users',uid,'projectBoards','mikves-phase2');const snap=await getDoc(state.docRef);if(!snap.exists()){await setDoc(state.docRef,{version:1,project:{name:'Mikves Fase 2',start:PROJECT_START,end:PROJECT_END},tasks:BASE_TASKS,createdAt:serverTimestamp(),updatedAt:serverTimestamp()})}else{const data=snap.data();if(Array.isArray(data.tasks))state.tasks=data.tasks.map(normalizeTask)}
+      state.unsubscribe?.();state.unsubscribe=onSnapshot(state.docRef,s=>{if(!s.exists()||state.saving)return;const d=s.data();if(Array.isArray(d.tasks)){state.tasks=d.tasks.map(normalizeTask);render()}});state.loaded=true;q('#login').classList.add('hidden');q('#app').classList.remove('hidden');render();setTimeout(scrollToday,80)
+    }
+
+    function scrollToday(){const sc=q('#ganttScroll'),today=clampDate(iso(new Date())),day=diff(PROJECT_START,today),left=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--left'))||330,px=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--day'))||28;sc.scrollLeft=Math.max(0,day*px-left*.25)}
+
+    window.addEventListener('pirulin-auth-changed',e=>{if(e.detail?.signedIn)attachFirebase(e.detail.uid);else{q('#app').classList.add('hidden');q('#login').classList.remove('hidden')}});
+    const wait=setInterval(()=>{const fb=window.PirulinFirebase;if(fb?.ready){clearInterval(wait);if(fb.user)attachFirebase(fb.user.uid)}},120);
+
+    q('#addBtn').onclick=addTask;q('#todayBtn').onclick=scrollToday;q('#drawerBack').onclick=closeDrawer;q('#closeDrawerBtn').onclick=closeDrawer;q('#saveTaskBtn').onclick=saveDrawer;q('#deleteTaskBtn').onclick=()=>{if(!state.selected)return;state.tasks=state.tasks.filter(t=>t.id!==state.selected);markDirty();render();closeDrawer()};q('#fProgress').oninput=e=>q('#fProgressLabel').textContent=e.target.value+'%';
+    q('#resetBtn').onclick=()=>{if(confirm('¿Restaurar el plan base? Se reemplazarán las tareas actuales.')){state.tasks=structuredClone(BASE_TASKS);markDirty();render()}};
+    qa('.chip').forEach(c=>c.onclick=()=>{qa('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');state.filter=c.dataset.filter;renderGantt()});
+  </script>
+</body>
+</html>

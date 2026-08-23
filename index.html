@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Pirulín!</title>
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./LOGO PIRULIN.png" type="image/png">
-  <link rel="apple-touch-icon" href="./LOGO PIRULIN.png">
+  <link rel="icon" href="./pirulin-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./pirulin-icon.svg">
   <meta name="theme-color" content="#ffffff">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,7 +16,7 @@
 <body>
   <div class="loading">Pirulín! ✨</div>
   <script>
-    const PIRULIN_VERSION = '0.12.8-dev';
+    const PIRULIN_VERSION = '0.12.9-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{
@@ -31,7 +31,7 @@
           .replace('if(taskHasDate && isoLocal(selectedTaskDate)==="2026-08-18"){','if(taskHasDate && isoLocal(selectedTaskDate)===TODAY_ISO){')
           .replace('if(dx>92)moveTaskToLater(task);','if(dx>92){ if(window.PirulinTaskSwipePostpone) window.PirulinTaskSwipePostpone(task); else moveTaskToLater(task); }')
           .replace('if(dx<-92)deleteTaskWithConfirm(task);','if(dx<-92){ if(window.PirulinTaskSwipeDelete) window.PirulinTaskSwipeDelete(task); else deleteTaskWithConfirm(task); }');
-        const appHead=`<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./LOGO PIRULIN.png" type="image/png"><link rel="apple-touch-icon" href="./LOGO PIRULIN.png"><meta name="theme-color" content="#ffffff"><style>#pirulinDevVersion{position:fixed;top:max(5px,env(safe-area-inset-top));right:7px;z-index:999999;pointer-events:none;font:800 9px/1 system-ui,sans-serif;color:#747b88;opacity:.52;background:rgba(255,255,255,.72);border-radius:999px;padding:3px 5px}</style>`;
+        const appHead=`<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./pirulin-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./pirulin-icon.svg"><meta name="theme-color" content="#ffffff"><style>#pirulinDevVersion{position:fixed;top:max(5px,env(safe-area-inset-top));right:7px;z-index:999999;pointer-events:none;font:800 9px/1 system-ui,sans-serif;color:#747b88;opacity:.52;background:rgba(255,255,255,.72);border-radius:999px;padding:3px 5px}</style>`;
         const appScripts=`
           <div id="pirulinDevVersion">v${PIRULIN_VERSION}</div>
           <script type="module" src="./firebase-client.js?v=${PIRULIN_VERSION}"><\/script>

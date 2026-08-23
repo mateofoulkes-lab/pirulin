@@ -28,11 +28,12 @@ function markerPct(value,bounds){const [a,b,c,d]=bounds;let pct;if(value<=a)pct=
 function calorieStatus(k,t){if(k<t.calorieLow*.72)return 'Muy bajo';if(k<t.calorieLow)return 'Bajo';if(k<=t.calorieHigh)return 'Objetivo';if(k<=t.maintenance*1.05)return 'Mantenimiento';return 'Alto'}
 function proteinStatus(v,t){if(v<t.proteinLow*.65)return 'Baja';if(v<t.proteinLow)return 'Mejorable';if(v<t.proteinHigh*.92)return 'Buena';if(v<=t.proteinHigh*1.08)return 'Óptima';return 'Alta'}
 function recommendation(day,t,tot){
-  if(tot.kcal<t.calorieLow*.72)return 'Aumentar ligeramente la ingesta.';
-  if(tot.protein<t.proteinLow)return 'Consumir más proteína.';
-  if(tot.kcal>t.maintenance*1.05)return 'Reducir calorías.';
-  if(tot.kcal>=t.calorieLow&&tot.kcal<=t.calorieHigh&&tot.protein>=t.proteinLow)return '¡Excelente día!';
-  return 'Seguir registrando: la tendencia importa más que un día.';
+  if(!Array.isArray(day?.foods)||!day.foods.length)return 'Alimentación aún no registrada';
+  if(tot.kcal<t.calorieLow*.72)return 'Tip: Aumentar ligeramente la ingesta.';
+  if(tot.protein<t.proteinLow)return 'Tip: Consumir más proteína.';
+  if(tot.kcal>t.maintenance*1.05)return 'Tip: Reducir calorías.';
+  if(tot.kcal>=t.calorieLow&&tot.kcal<=t.calorieHigh&&tot.protein>=t.proteinLow)return 'Tip: ¡Excelente día!';
+  return 'Tip: Seguir registrando: la tendencia importa más que un día.';
 }
 function activityIcon(day){
   const list=Array.isArray(day?.exercise)?day.exercise:[];
@@ -43,10 +44,10 @@ function activityIcon(day){
 }
 function decorateSummary(day,tot){
   const stats=[...document.querySelectorAll('#foodRegisterPane .food-summary .food-stat')];if(stats.length<3)return;
-  const third=stats[2],icon=activityIcon(day),weight=day?.weightKg;
-  third.classList.add('food-weight-activity-stat');
+  const third=stats[2],icon=activityIcon(day);
+  third.classList.add('food-activity-stat');
   const activity=icon?`<span class="food-activity-inline" title="Actividad registrada"><span class="food-activity-badge">${icon}</span>${tot.exerciseMin?`<small>${tot.exerciseMin} min</small>`:''}</span>`:`<span class="food-no-activity" title="Sin actividad">—</span>`;
-  const html=`<div class="food-weight-line"><b>${weight?fmt(weight)+' kg':'Sin peso'}</b>${activity}</div><span>peso · actividad</span>`;
+  const html=`<div class="food-activity-line">${activity}</div><span>actividad</span>`;
   if(third.innerHTML!==html)third.innerHTML=html;
 }
 function ensureTargetFooter(card,text){
@@ -92,9 +93,8 @@ async function backfillMissingTargets(){
 function styles(){
   if(document.querySelector('#comidasDayContextStyle'))return;
   const s=document.createElement('style');s.id='comidasDayContextStyle';s.textContent=`
-    #foodRegisterPane .food-weight-line{display:flex;align-items:center;justify-content:center;gap:8px;min-height:28px}
-    #foodRegisterPane .food-weight-line b{font-size:16px!important;white-space:nowrap}
-    #foodRegisterPane .food-activity-inline{display:flex;align-items:center;gap:4px}
+    #foodRegisterPane .food-activity-line{display:flex;align-items:center;justify-content:center;min-height:28px}
+    #foodRegisterPane .food-activity-inline{display:flex;align-items:center;justify-content:center;gap:5px}
     #foodRegisterPane .food-activity-inline small{font-size:8.5px;font-weight:900;color:#77808c;white-space:nowrap}
     #foodRegisterPane .food-activity-badge{width:25px;height:25px;border-radius:9px;background:#eaf6f1;display:grid;place-items:center;font-size:14px;box-shadow:inset 0 0 0 1px rgba(44,139,105,.08)}
     #foodRegisterPane .food-no-activity{font-size:18px;font-weight:800;color:#adb3bc;line-height:1}

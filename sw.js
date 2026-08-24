@@ -1,11 +1,11 @@
-const CACHE = 'pirulin-pwa-v0.13.1-dev';
+const CACHE = 'pirulin-pwa-v0.13.2-dev';
 const CORE = [
   './','./index.html','./mockup_pirulin_v51.html','./launcher-splash.js','./firebase-client.js',
   './tasks-repository.js','./tasks-preferences.js','./tasks-advanced.js','./tasks-live-adapter.js','./tasks-assign-today.js',
   './notes-repository.js','./notes-ui-v3.js','./notes-editor-fixes.js','./notes-live-v3.js','./notes-colors.js','./notes-keep-polish.js','./notes-menu-dismiss.js',
   './expenses-repository.js','./expenses-live.js','./expenses-final-fixes.js','./expenses-settle-celebration.js','./expenses-ui-polish.js','./expenses-percent-slider.js','./expenses-migration.js','./expenses-categories.js','./expenses-card-compact.js','./expenses-report.js','./expenses-report-motion.js',
   './comidas-repository.js','./comidas-live.js','./comidas-plan.js','./comidas-day-context.js','./comidas-nav.js',
-  './subapp-transitions.js','./pirulin-icon.svg','./manifest.webmanifest'
+  './subapp-transitions.js','./pirulin-icon.svg','./LOGO PIRULIN.png','./manifest.webmanifest'
 ];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)));self.skipWaiting()});self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))));self.clients.claim()});
 function isCritical(url,request){if(request.mode==='navigate')return true;return /\/(?:index\.html|mockup_pirulin_v51\.html|launcher-splash\.js|firebase-client\.js|tasks-repository\.js|tasks-preferences\.js|tasks-advanced\.js|tasks-live-adapter\.js|tasks-assign-today\.js|notes-repository\.js|notes-ui-v3\.js|notes-editor-fixes\.js|notes-live-v3\.js|notes-colors\.js|notes-keep-polish\.js|notes-menu-dismiss\.js|expenses-repository\.js|expenses-live\.js|expenses-final-fixes\.js|expenses-settle-celebration\.js|expenses-ui-polish\.js|expenses-percent-slider\.js|expenses-migration\.js|expenses-categories\.js|expenses-card-compact\.js|expenses-report\.js|expenses-report-motion\.js|comidas-repository\.js|comidas-live\.js|comidas-plan\.js|comidas-day-context\.js|comidas-nav\.js|subapp-transitions\.js|pirulin-icon\.svg)$/.test(url.pathname)}

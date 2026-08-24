@@ -12,9 +12,9 @@
   "theme_color":"#ffffff",
   "icons":[
     {
-      "src":"./pirulin-icon.svg",
-      "sizes":"any",
-      "type":"image/svg+xml",
+      "src":"./LOGO PIRULIN.png",
+      "sizes":"1254x1254",
+      "type":"image/png",
       "purpose":"any"
     },
     {

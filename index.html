@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Pirulín!</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=0.13.3-dev">
+  <link rel="manifest" href="./manifest.webmanifest?v=0.13.4-dev">
   <link rel="icon" href="./pirulin-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./pirulin-icon.svg">
   <meta name="color-scheme" content="light only">
@@ -19,7 +19,7 @@
 <body>
   <div class="loading" aria-hidden="true"></div>
   <script>
-    const PIRULIN_VERSION = '0.13.3-dev';
+    const PIRULIN_VERSION = '0.13.4-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{

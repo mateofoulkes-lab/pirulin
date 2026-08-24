@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Pirulín!</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=0.13.5-dev">
+  <link rel="manifest" href="./manifest.webmanifest?v=0.14.0-dev">
   <link rel="icon" href="./pirulin-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./pirulin-icon.svg">
   <meta name="color-scheme" content="light only">
@@ -19,7 +19,7 @@
 <body>
   <div class="loading" aria-hidden="true"></div>
   <script>
-    const PIRULIN_VERSION = '0.13.5-dev';
+    const PIRULIN_VERSION = '0.14.0-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{
@@ -38,6 +38,7 @@
         const appScripts=`
           <div id="pirulinDevVersion">v${PIRULIN_VERSION}</div>
           <script type="module" src="./launcher-splash.js?v=${PIRULIN_VERSION}"><\/script>
+          <script type="module" src="./update-manager.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./firebase-client.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./tasks-repository.js?v=${PIRULIN_VERSION}"><\/script>
           <script type="module" src="./notes-repository.js?v=${PIRULIN_VERSION}"><\/script>

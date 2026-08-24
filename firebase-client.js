@@ -4,7 +4,9 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
   signInWithPopup,
-  signOut
+  signOut,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-auth.js";
 import {
   initializeFirestore,
@@ -42,6 +44,7 @@ const state = {
   user: null,
   person: null,
   ready: false,
+  persistenceReady: false,
   mockLoginHandler: null,
   mockTransitionDone: false
 };
@@ -99,7 +102,6 @@ function runOriginalV51LoginTransition() {
     console.error("Pirulín: falló la transición original v51", error);
   }
 
-  // Fallback: nunca dejar la pantalla de login tapando la app.
   if (login) login.classList.add("hidden");
 }
 
@@ -142,6 +144,7 @@ async function doGoogleLogin() {
   if (button) button.disabled = true;
   setLoginStatus("Abriendo Google…");
   try {
+    await ensureAuthPersistence();
     const result = await signInWithPopup(auth, provider);
     const person = await validateUser(result.user);
     setLoginStatus("");
@@ -168,7 +171,6 @@ function installLoginHook() {
   if (!button || button.dataset.firebaseHooked === "1") return;
   button.dataset.firebaseHooked = "1";
 
-  // Guardamos la transición aprobada del mockup y evitamos que se ejecute antes de autenticar.
   state.mockLoginHandler = typeof button.onclick === "function" ? button.onclick : null;
   if (state.mockLoginHandler) button.onclick = null;
 
@@ -195,18 +197,37 @@ function bootWhenMockupReady() {
   observer.observe(document.documentElement, { childList: true, subtree: true });
 }
 
+let persistencePromise=null;
+function ensureAuthPersistence(){
+  if(persistencePromise)return persistencePromise;
+  persistencePromise=setPersistence(auth,browserLocalPersistence)
+    .then(()=>{state.persistenceReady=true})
+    .catch(error=>{
+      state.persistenceReady=false;
+      console.error("Pirulín: no pude habilitar persistencia local de sesión",error);
+      throw error;
+    });
+  return persistencePromise;
+}
+
 bootWhenMockupReady();
 
-onAuthStateChanged(auth, async user => {
-  if (!user) {
-    showLogin();
-    return;
-  }
-  try {
-    const person = await validateUser(user);
-    showApp(user, person);
-  } catch (error) {
-    console.warn(error);
-    showLogin(error.message);
-  }
-});
+ensureAuthPersistence()
+  .then(()=>{
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        showLogin();
+        return;
+      }
+      try {
+        const person = await validateUser(user);
+        showApp(user, person);
+      } catch (error) {
+        console.warn(error);
+        showLogin(error.message);
+      }
+    });
+  })
+  .catch(()=>{
+    showLogin("No pude guardar la sesión en este dispositivo.");
+  });

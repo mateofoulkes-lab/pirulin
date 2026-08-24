@@ -55,7 +55,7 @@ function installCategorySelect(){
     current.replaceWith(select);
   }
   select.required=true;select.setAttribute('aria-label','Categoría');
-  select.innerHTML='<option value="" disabled selected>Elegí una categoría</option>'+CATEGORIES.map(x=>`<option value="${x}">${x}</option>`).join('');
+  select.innerHTML=CATEGORIES.map(x=>`<option value="${x}"${x==='Alimentos'?' selected':''}>${x}</option>`).join('');
 
   const modal=$c('#expenseModalMock');
   if(modal&&!modal.dataset.categoryObserver){
@@ -65,7 +65,7 @@ function installCategorySelect(){
       const s=$c('#expenseCategoryMock');if(!s)return;
       if(CATEGORY_SET.has(s.value))return;
       const editing=/editar/i.test($c('#expenseModalMockTitle')?.textContent||'');
-      if(!editing){s.value='';return}
+      if(!editing){s.value='Alimentos';return}
       const desc=$c('#expenseDescMock')?.value||'';
       s.value=classifyExpense({desc,cat:s.value})||'Otros / regalos';
     }).observe(modal,{attributes:true,attributeFilter:['class']});

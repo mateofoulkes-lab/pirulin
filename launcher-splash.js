@@ -1,4 +1,5 @@
 const BOOT_TOTAL_MS=500;
+const BOOT_EASE='cubic-bezier(.16,1,.3,1)';
 let bootFinished=false;
 let backdrop=null;
 let flyingLogo=null;
@@ -91,7 +92,7 @@ async function animateIntoLauncher(){
   const logoAnim=flyingLogo.animate([
     {left:`${from.left}px`,top:`${from.top}px`,width:`${from.width}px`,height:`${from.height}px`},
     {left:`${to.left}px`,top:`${to.top}px`,width:`${to.width}px`,height:`${to.height}px`}
-  ],{duration:BOOT_TOTAL_MS,easing:'cubic-bezier(.22,.82,.2,1)',fill:'forwards'});
+  ],{duration:BOOT_TOTAL_MS,easing:BOOT_EASE,fill:'forwards'});
 
   backdrop.animate([
     {opacity:1,offset:0},
@@ -104,7 +105,7 @@ async function animateIntoLauncher(){
       {opacity:0,transform:'translateY(8px)',offset:0},
       {opacity:0,transform:'translateY(8px)',offset:.28},
       {opacity:1,transform:'translateY(0)',offset:1}
-    ],{duration:BOOT_TOTAL_MS,easing:'cubic-bezier(.22,.8,.2,1)',fill:'forwards'});
+    ],{duration:BOOT_TOTAL_MS,easing:BOOT_EASE,fill:'forwards'});
   }
 
   finishTimer=setTimeout(()=>cleanup(),BOOT_TOTAL_MS+25);

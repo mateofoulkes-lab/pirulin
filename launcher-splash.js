@@ -24,7 +24,7 @@ function addBootStyles(){
   style.textContent=`
     html,body{background:#fff!important;color-scheme:light!important}
     #pirulinBootBackdrop{position:fixed;inset:0;z-index:999997;background:#fff!important;pointer-events:auto;opacity:1}
-    #pirulinBootLogo{position:fixed;z-index:999999;display:block;width:min(188px,58vw);height:auto;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(38,40,48,.07));will-change:transform;pointer-events:none}
+    #pirulinBootLogo{position:fixed;z-index:999999;display:block;width:min(310px,78vw);height:auto;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(38,40,48,.07));will-change:left,top,width,height;pointer-events:none}
     html.pirulin-starting #launcher .pirulin-launcher-brand{opacity:0!important}
     html.pirulin-starting #launcher .app-grid{opacity:0;transform:translateY(8px);animation:none!important}
     @media (prefers-reduced-motion:reduce){#launcher .app-grid{transition:none!important}}
@@ -55,7 +55,7 @@ async function makeOverlay(){
   return true;
 }
 
-function cleanup(showLauncher=true){
+function cleanup(){
   if(bootFinished)return;
   bootFinished=true;
   clearTimeout(finishTimer);
@@ -77,24 +77,20 @@ async function animateIntoLauncher(){
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   const from=flyingLogo.getBoundingClientRect();
   const to=target.getBoundingClientRect();
-  if(!from.width||!to.width)return false;
+  if(!from.width||!from.height||!to.width||!to.height)return false;
 
   flyingLogo.style.left=`${from.left}px`;
   flyingLogo.style.top=`${from.top}px`;
   flyingLogo.style.width=`${from.width}px`;
   flyingLogo.style.height=`${from.height}px`;
   flyingLogo.style.transform='none';
-  flyingLogo.style.transformOrigin='0 0';
 
-  const dx=to.left-from.left;
-  const dy=to.top-from.top;
-  const scale=to.width/from.width;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(reduced){cleanup(true);return true}
+  if(reduced){cleanup();return true}
 
   const logoAnim=flyingLogo.animate([
-    {transform:'translate3d(0,0,0) scale(1)'},
-    {transform:`translate3d(${dx}px,${dy}px,0) scale(${scale})`}
+    {left:`${from.left}px`,top:`${from.top}px`,width:`${from.width}px`,height:`${from.height}px`},
+    {left:`${to.left}px`,top:`${to.top}px`,width:`${to.width}px`,height:`${to.height}px`}
   ],{duration:BOOT_TOTAL_MS,easing:'cubic-bezier(.22,.82,.2,1)',fill:'forwards'});
 
   backdrop.animate([
@@ -111,7 +107,7 @@ async function animateIntoLauncher(){
     ],{duration:BOOT_TOTAL_MS,easing:'cubic-bezier(.22,.8,.2,1)',fill:'forwards'});
   }
 
-  finishTimer=setTimeout(()=>cleanup(true),BOOT_TOTAL_MS+25);
+  finishTimer=setTimeout(()=>cleanup(),BOOT_TOTAL_MS+25);
   try{await logoAnim.finished}catch{}
   return true;
 }
@@ -133,8 +129,8 @@ window.addEventListener('pirulin-auth-changed',e=>{
   if(e.detail?.signedIn){setTimeout(tryStart,0);return}
   backdrop?.animate([{opacity:1},{opacity:0}],{duration:160,fill:'forwards'});
   flyingLogo?.animate([{opacity:1},{opacity:0}],{duration:120,fill:'forwards'});
-  setTimeout(()=>cleanup(false),170);
+  setTimeout(()=>cleanup(),170);
 });
 
 setTimeout(tryStart,0);
-setTimeout(()=>{if(!bootFinished)cleanup(visible(qs('#launcher')))},3000);
+setTimeout(()=>{if(!bootFinished)cleanup()},3000);

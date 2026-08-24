@@ -32,8 +32,8 @@ function installPlanUI(){
     #comidasSuite .plan-item{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;background:#fff;border:1px solid #eceff4;border-radius:18px;padding:12px 11px;margin:8px 0;box-shadow:0 6px 18px rgba(29,42,77,.035)}
     #comidasSuite .plan-time{font-size:11px;font-weight:900;color:#858d99;text-align:center}.plan-time.no-time{color:#c2c6cd}
     #comidasSuite .plan-copy b{display:block;font-size:13px;color:#343b46;line-height:1.25}.plan-copy small{display:block;margin-top:3px;font-size:9.5px;color:#969da8}.plan-more{border:0;background:transparent;width:32px;height:32px;color:#707987;font-weight:900}
-    #comidasSuite .plan-fab{position:absolute;right:0;bottom:19px;z-index:25;width:60px;height:60px;min-width:60px;min-height:60px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#ff9a62,#ff6b3d);color:#fff;font:400 34px/1 Nunito,system-ui,sans-serif;box-shadow:0 12px 28px rgba(255,107,61,.28),0 2px 7px rgba(255,107,61,.14);transition:transform .18s cubic-bezier(.2,.9,.2,1),box-shadow .18s ease,filter .18s ease}
-    #comidasSuite .plan-fab:active{transform:scale(.94);box-shadow:0 8px 20px rgba(255,107,61,.22)}#comidasSuite .plan-fab:hover{filter:saturate(1.04)}
+    #comidasSuite .plan-fab{position:absolute;right:0;bottom:19px;z-index:25;width:60px;height:60px;min-width:60px;min-height:60px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#42d8b2,#2ad1aa);color:#fff;font:400 34px/1 Nunito,system-ui,sans-serif;box-shadow:0 12px 28px rgba(42,209,170,.28),0 2px 7px rgba(42,209,170,.14);transition:transform .18s cubic-bezier(.2,.9,.2,1),box-shadow .18s ease,filter .18s ease}
+    #comidasSuite .plan-fab:active{transform:scale(.94);box-shadow:0 8px 20px rgba(42,209,170,.22)}#comidasSuite .plan-fab:hover{filter:saturate(1.04)}
     #comidasSuite .plan-person-mateo{color:#4e86d8}.plan-person-dani{color:#d26d9d}
     #comidasSuite .plan-past-note{font-size:10px;color:#a08758;background:#fff8e8;border-radius:12px;padding:8px 10px;margin:3px 0 8px}
   `;document.head.appendChild(style);

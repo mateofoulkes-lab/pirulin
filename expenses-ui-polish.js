@@ -67,9 +67,10 @@ function install(){
       display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;z-index:1!important;
       width:100%!important;max-width:none!important;box-sizing:border-box!important;flex:none!important;margin:0!important;padding:12px 14px!important;border-radius:18px!important;
       box-shadow:0 8px 28px rgba(31,41,55,.14)!important;background:rgba(255,255,255,.92)!important;backdrop-filter:blur(10px)!important;
+      text-align:center!important;
     }
-    #gastosSuite .money-balance .balance-main{display:block!important;visibility:visible!important;opacity:1!important;font-size:19px!important;line-height:1.15!important;margin-top:2px!important}
-    #gastosSuite .money-balance .eyebrow{display:block!important;margin-bottom:2px!important;font-size:9px!important}
+    #gastosSuite .money-balance .balance-main{display:block!important;visibility:visible!important;opacity:1!important;font-size:19px!important;line-height:1.15!important;margin-top:2px!important;text-align:center!important}
+    #gastosSuite .money-balance .eyebrow{display:block!important;margin-bottom:2px!important;font-size:9px!important;text-align:center!important}
     #gastosSuite .settle-btn{margin-top:9px!important;width:100%!important}
     #gastosSuite .gastos-fab{
       position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;z-index:2!important;

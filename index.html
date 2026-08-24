@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Pirulín!</title>
-  <link rel="manifest" href="./manifest.webmanifest?v=0.13.1-dev">
+  <link rel="manifest" href="./manifest.webmanifest?v=0.13.2-dev">
   <link rel="icon" href="./pirulin-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./pirulin-icon.svg">
   <meta name="color-scheme" content="light only">
@@ -19,7 +19,7 @@
 <body>
   <div class="loading" aria-hidden="true"></div>
   <script>
-    const PIRULIN_VERSION = '0.13.1-dev';
+    const PIRULIN_VERSION = '0.13.2-dev';
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(PIRULIN_VERSION)}`).catch(console.error);
     (async()=>{
       try{
@@ -34,7 +34,7 @@
           .replace('if(taskHasDate && isoLocal(selectedTaskDate)==="2026-08-18"){','if(taskHasDate && isoLocal(selectedTaskDate)===TODAY_ISO){')
           .replace('if(dx>92)moveTaskToLater(task);','if(dx>92){ if(window.PirulinTaskSwipePostpone) window.PirulinTaskSwipePostpone(task); else moveTaskToLater(task); }')
           .replace('if(dx<-92)deleteTaskWithConfirm(task);','if(dx<-92){ if(window.PirulinTaskSwipeDelete) window.PirulinTaskSwipeDelete(task); else deleteTaskWithConfirm(task); }');
-        const appHead=`<link rel="manifest" href="./manifest.webmanifest?v=${PIRULIN_VERSION}"><link rel="icon" href="./pirulin-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./pirulin-icon.svg"><meta name="color-scheme" content="light only"><meta name="theme-color" content="#ffffff"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#ffffff"><style>html,body{background:#fff!important;color-scheme:light!important}html.pirulin-starting #launcher .pirulin-launcher-brand{visibility:hidden!important}html.pirulin-starting #launcher .app-grid{opacity:0!important;animation:none!important}#pirulinDevVersion{position:fixed;top:max(5px,env(safe-area-inset-top));right:7px;z-index:999999;pointer-events:none;font:800 9px/1 system-ui,sans-serif;color:#747b88;opacity:.52;background:rgba(255,255,255,.72);border-radius:999px;padding:3px 5px}</style><script>document.documentElement.classList.add('pirulin-starting')<\/script>`;
+        const appHead=`<link rel="manifest" href="./manifest.webmanifest?v=${PIRULIN_VERSION}"><link rel="icon" href="./pirulin-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./pirulin-icon.svg"><meta name="color-scheme" content="light only"><meta name="theme-color" content="#ffffff"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#ffffff"><style>html,body{background:#fff!important;color-scheme:light!important}html.pirulin-starting #launcher .pirulin-launcher-brand{opacity:0!important}html.pirulin-starting #launcher .app-grid{opacity:0;transform:translateY(8px);animation:none!important}#pirulinDevVersion{position:fixed;top:max(5px,env(safe-area-inset-top));right:7px;z-index:999999;pointer-events:none;font:800 9px/1 system-ui,sans-serif;color:#747b88;opacity:.52;background:rgba(255,255,255,.72);border-radius:999px;padding:3px 5px}</style><script>document.documentElement.classList.add('pirulin-starting')<\/script>`;
         const appScripts=`
           <div id="pirulinDevVersion">v${PIRULIN_VERSION}</div>
           <script type="module" src="./launcher-splash.js?v=${PIRULIN_VERSION}"><\/script>

@@ -1,6 +1,6 @@
-const CACHE = 'pirulin-pwa-v0.14.4-beta';
+const CACHE = 'pirulin-pwa-v0.14.5-beta';
 const CORE = [
-  './','./index.html','./mockup_pirulin_v51.html','./launcher-splash.js','./update-manager.js','./firebase-client.js',
+  './','./index.html','./mockup_pirulin_v51.html','./launcher-splash.js','./update-manager.js','./firebase-client.js','./notification-test.js',
   './tasks-repository.js','./tasks-preferences.js','./tasks-advanced.js','./tasks-live-adapter.js','./tasks-assign-today.js',
   './notes-repository.js','./notes-ui-v3.js','./notes-editor-fixes.js','./notes-live-v3.js','./notes-colors.js','./notes-keep-polish.js','./notes-menu-dismiss.js',
   './expenses-repository.js','./expenses-live.js','./expenses-final-fixes.js','./expenses-settle-celebration.js','./expenses-ui-polish.js','./expenses-percent-slider.js','./expenses-migration.js','./expenses-categories.js','./expenses-card-compact.js','./expenses-report.js','./expenses-report-motion.js',
@@ -13,7 +13,40 @@ self.addEventListener('install',event=>{
 });
 
 self.addEventListener('message',event=>{
-  if(event.data?.type==='SKIP_WAITING')self.skipWaiting();
+  if(event.data?.type==='SKIP_WAITING'){
+    self.skipWaiting();
+    return;
+  }
+  if(event.data?.type==='TEST_NOTIFICATION_15S'){
+    const delay=Math.max(0,Math.min(60000,Number(event.data.delayMs)||15000));
+    event.waitUntil(
+      new Promise(resolve=>setTimeout(resolve,delay)).then(()=>
+        self.registration.showNotification('Pirulín! 🔔',{
+          body:'Prueba exitosa: Pirulín puede notificarte aunque la app esté cerrada.',
+          icon:'./pirulin-icon.svg',
+          badge:'./pirulin-icon.svg',
+          tag:'pirulin-test-notification',
+          renotify:true,
+          data:{url:'./index.html'}
+        })
+      )
+    );
+  }
+});
+
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const target=new URL(event.notification.data?.url||'./index.html',self.location.href).href;
+  event.waitUntil(
+    clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
+      const existing=list.find(client=>client.url.startsWith(self.location.origin+self.registration.scope.replace(self.location.origin,'')));
+      if(existing){
+        existing.navigate(target).catch(()=>{});
+        return existing.focus();
+      }
+      return clients.openWindow(target);
+    })
+  );
 });
 
 self.addEventListener('activate',event=>{
@@ -26,7 +59,7 @@ self.addEventListener('activate',event=>{
 
 function isCritical(url,request){
   if(request.mode==='navigate')return true;
-  return /\/(?:index\.html|mockup_pirulin_v51\.html|launcher-splash\.js|update-manager\.js|firebase-client\.js|tasks-repository\.js|tasks-preferences\.js|tasks-advanced\.js|tasks-live-adapter\.js|tasks-assign-today\.js|notes-repository\.js|notes-ui-v3\.js|notes-editor-fixes\.js|notes-live-v3\.js|notes-colors\.js|notes-keep-polish\.js|notes-menu-dismiss\.js|expenses-repository\.js|expenses-live\.js|expenses-final-fixes\.js|expenses-settle-celebration\.js|expenses-ui-polish\.js|expenses-percent-slider\.js|expenses-migration\.js|expenses-categories\.js|expenses-card-compact\.js|expenses-report\.js|expenses-report-motion\.js|comidas-repository\.js|comidas-live\.js|comidas-plan\.js|comidas-day-context\.js|comidas-nav\.js|subapp-transitions\.js|pirulin-icon\.svg)$/.test(url.pathname)
+  return /\/(?:index\.html|mockup_pirulin_v51\.html|launcher-splash\.js|update-manager\.js|firebase-client\.js|notification-test\.js|tasks-repository\.js|tasks-preferences\.js|tasks-advanced\.js|tasks-live-adapter\.js|tasks-assign-today\.js|notes-repository\.js|notes-ui-v3\.js|notes-editor-fixes\.js|notes-live-v3\.js|notes-colors\.js|notes-keep-polish\.js|notes-menu-dismiss\.js|expenses-repository\.js|expenses-live\.js|expenses-final-fixes\.js|expenses-settle-celebration\.js|expenses-ui-polish\.js|expenses-percent-slider\.js|expenses-migration\.js|expenses-categories\.js|expenses-card-compact\.js|expenses-report\.js|expenses-report-motion\.js|comidas-repository\.js|comidas-live\.js|comidas-plan\.js|comidas-day-context\.js|comidas-nav\.js|subapp-transitions\.js|pirulin-icon\.svg)$/.test(url.pathname)
 }
 
 self.addEventListener('fetch',event=>{

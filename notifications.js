@@ -4,6 +4,7 @@ import { getMessaging, isSupported, onRegistered, register } from "https://www.g
 let messaging=null;
 let stopRegistered=null;
 let booting=false;
+let routedHash='';
 
 function state(){return window.PirulinFirebase||null}
 function launcher(){return document.getElementById('launcher')}
@@ -55,15 +56,28 @@ async function ensurePushRegistration(){
   }catch(e){console.error('Pirulín FCM registration',e)}finally{booting=false}
 }
 
+function openHashDestination(){
+  const hash=location.hash;if(!hash||hash===routedHash||!state()?.user)return;
+  const buttonId={'#gastos':'openGastosApp','#tareas':'openTasksApp','#comidas':'openComidasApp'}[hash];
+  if(!buttonId)return;
+  const button=document.getElementById(buttonId);
+  if(!button)return setTimeout(openHashDestination,120);
+  routedHash=hash;
+  setTimeout(()=>{button.click();history.replaceState(null,'',location.pathname+location.search)},180);
+}
+
 function sync(){
   if(!state()?.user)return;
-  if(!('Notification'in window)||!('serviceWorker'in navigator))return;
-  if(Notification.permission==='granted'){removePrompt();ensurePushRegistration()}
-  else if(Notification.permission==='default')installPrompt();
-  else removePrompt();
+  if('Notification'in window&&'serviceWorker'in navigator){
+    if(Notification.permission==='granted'){removePrompt();ensurePushRegistration()}
+    else if(Notification.permission==='default')installPrompt();
+    else removePrompt();
+  }
+  openHashDestination();
 }
 
 window.addEventListener('pirulin-auth-changed',e=>{if(e.detail?.signedIn)setTimeout(sync,80);else removePrompt()});
+window.addEventListener('hashchange',openHashDestination);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 setTimeout(sync,220);
 window.PirulinNotifications={sync,register:ensurePushRegistration};

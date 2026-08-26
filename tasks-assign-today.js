@@ -42,11 +42,33 @@ function syncMenu(){
   const card=window.activeTask?.classList?.contains('nested-task')?null:window.activeTask;
   btn.style.display=isAllTaskNotToday(card)?'':'none';
 }
+function sharedTab(){
+  return [...document.querySelectorAll('.tab')].find(el=>/compartid/i.test(el.textContent||''))||null;
+}
+function syncSharedBadge(){
+  const tab=sharedTab();
+  const badge=tab?.querySelector('.badge');
+  if(!badge)return;
+  const tasks=Array.isArray(window.PirulinTaskLive?.tasks)?window.PirulinTaskLive.tasks:[];
+  const count=tasks.filter(task=>task?.shared===true).length;
+  badge.textContent=String(count);
+  badge.style.display=count>0?'':'none';
+}
+function watchSharedBadge(){
+  syncSharedBadge();
+  const list=document.querySelector('#sharedList');
+  if(!list||list.dataset.sharedBadgeWatch==='1')return;
+  list.dataset.sharedBadgeWatch='1';
+  new MutationObserver(()=>syncSharedBadge()).observe(list,{childList:true,subtree:false});
+  window.addEventListener('pirulin-auth-changed',()=>setTimeout(syncSharedBadge,100));
+  setInterval(syncSharedBadge,1500);
+}
 function install(){
   if(document.documentElement.dataset.tasksAssignToday==='1')return true;
   if(!window.PirulinTasks||!window.PirulinTaskLive||!document.querySelector('#taskMenu'))return false;
   document.documentElement.dataset.tasksAssignToday='1';
   ensureMenuButton();
+  watchSharedBadge();
 
   document.addEventListener('click',e=>{
     const more=e.target.closest?.('#allList .task .more');

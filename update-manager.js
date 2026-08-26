@@ -5,7 +5,19 @@ let checking=false;
 let reloading=false;
 
 const CHECK_INTERVAL_MS=15*60*1000;
+const UPDATE_ACCEPT_COOLDOWN_MS=45*1000;
+const UPDATE_ACCEPT_KEY='pirulin-update-accepted-at';
 const $u=(s,r=document)=>r.querySelector(s);
+
+function recentlyAcceptedUpdate(){
+  try{
+    const at=Number(sessionStorage.getItem(UPDATE_ACCEPT_KEY)||0);
+    return at>0&&Date.now()-at<UPDATE_ACCEPT_COOLDOWN_MS;
+  }catch{return false}
+}
+function rememberAcceptedUpdate(){
+  try{sessionStorage.setItem(UPDATE_ACCEPT_KEY,String(Date.now()))}catch{}
+}
 
 function ensureStyles(){
   if($u('#pirulinUpdateStyles'))return;
@@ -44,6 +56,12 @@ function showBanner(reg,worker){
   updateRegistration=reg||updateRegistration;
   updateWorker=worker||reg?.waiting||updateWorker;
   if(!updateWorker)return;
+  // Si el usuario acaba de aceptar una actualización y apareció otra instalación
+  // encadenada, la aplicamos sin volver a pedirle que toque "Actualizar".
+  if(recentlyAcceptedUpdate()){
+    updateWorker.postMessage({type:'SKIP_WAITING'});
+    return;
+  }
   const el=ensureBanner();
   requestAnimationFrame(()=>el.classList.add('show'));
 }
@@ -51,7 +69,8 @@ function hideBanner(){banner?.classList.remove('show')}
 
 function watchInstalling(reg){
   const worker=reg.installing;
-  if(!worker)return;
+  if(!worker||worker.__pirulinWatched)return;
+  worker.__pirulinWatched=true;
   worker.addEventListener('statechange',()=>{
     if(worker.state==='installed'&&navigator.serviceWorker.controller){
       showBanner(reg,reg.waiting||worker);
@@ -77,6 +96,7 @@ async function checkForUpdate(){
 function applyUpdate(){
   const worker=updateWorker||updateRegistration?.waiting;
   if(!worker)return checkForUpdate();
+  rememberAcceptedUpdate();
   const button=$u('#pirulinUpdateNow');
   if(button){button.disabled=true;button.textContent='Actualizando…'}
   worker.postMessage({type:'SKIP_WAITING'});

@@ -54,7 +54,24 @@ function normalizePlanItem(input={}){
     updatedAtClient:now
   };
 }
-async function savePlanItem(input){const p=normalizePlanItem(input);if(!p.text)throw new Error('Escribí qué van a comer.');await setDoc(doc(planCol(),p.id),{...p,updatedAt:serverTimestamp()},{merge:true});return p}
+function notifyPlanItem(item){
+  if(!window.PirulinNotifications?.notifyOther)return;
+  const who=window.PirulinFirebase?.person||'Alguien';
+  window.PirulinNotifications.notifyOther({
+    kind:'food-plan',
+    title:'Pirulín! · Comidas',
+    body:`${who} agregó al plan: ${item.text}`,
+    url:'#comidas'
+  }).catch?.(()=>{});
+}
+async function savePlanItem(input){
+  const isNew=!input?.id;
+  const p=normalizePlanItem(input);
+  if(!p.text)throw new Error('Escribí qué van a comer.');
+  await setDoc(doc(planCol(),p.id),{...p,updatedAt:serverTimestamp()},{merge:true});
+  if(isNew)notifyPlanItem(p);
+  return p
+}
 async function deletePlanItem(id){await deleteDoc(doc(planCol(),str(id)))}
 function subscribePlan({onChange,onError}={}){return onSnapshot(planCol(),snap=>{const out=[];snap.forEach(x=>out.push({...x.data(),id:x.id}));out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.time||'').localeCompare(String(b.time||''))||Number(a.updatedAtClient||0)-Number(b.updatedAtClient||0));onChange?.(out)},onError)}
 

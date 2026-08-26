@@ -63,7 +63,19 @@ function taskDocRef(task) {
   return { normalized, ref: doc(base, normalized.id) };
 }
 
+async function notifySharedTask(task){
+  if(!task?.shared||!window.PirulinNotifications?.notifyOther)return;
+  const who=window.PirulinFirebase?.person||'Alguien';
+  window.PirulinNotifications.notifyOther({
+    kind:'tasks',
+    title:'Pirulín! · Tareas',
+    body:`${who} compartió: ${task.title}`,
+    url:'#tareas'
+  }).catch?.(()=>{});
+}
+
 async function saveTask(task) {
+  const isNew=!task?.id;
   const { normalized, ref } = taskDocRef(task);
   if (!normalized.title) throw new Error("La tarea necesita título.");
 
@@ -72,6 +84,7 @@ async function saveTask(task) {
     updatedAt: serverTimestamp()
   }, { merge: true });
 
+  if(isNew&&normalized.shared)notifySharedTask(normalized);
   return normalized;
 }
 
@@ -95,6 +108,7 @@ async function moveTaskBetweenScopes(task, shared) {
     updatedAt: serverTimestamp()
   }, { merge: true });
   await deleteDoc(oldRef);
+  if(!oldTask.shared&&nextTask.shared)notifySharedTask(nextTask);
   return nextTask;
 }
 

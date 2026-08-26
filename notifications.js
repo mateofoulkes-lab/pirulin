@@ -1,6 +1,7 @@
-import { doc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+import { collection, doc, getDocs, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
 import { getMessaging, isSupported, onRegistered, register } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-messaging.js";
 
+const NOTIFY_URL='https://pirulin-notifications.mateofoulkes.workers.dev/notify';
 let messaging=null;
 let stopRegistered=null;
 let booting=false;
@@ -9,6 +10,7 @@ let routedHash='';
 function state(){return window.PirulinFirebase||null}
 function launcher(){return document.getElementById('launcher')}
 function registrationDocId(fid){return encodeURIComponent(String(fid||''))}
+function otherPerson(){return state()?.person==='Mateo'?'Dani':'Mateo'}
 
 function removePrompt(){document.getElementById('pirulinNotificationsPrompt')?.remove()}
 
@@ -56,6 +58,44 @@ async function ensurePushRegistration(){
   }catch(e){console.error('Pirulín FCM registration',e)}finally{booting=false}
 }
 
+async function recipientFids(person=otherPerson()){
+  const s=state();if(!s?.db||!person)return[];
+  const snap=await getDocs(collection(s.db,'shared','pushRegistrations','items'));
+  const out=[];
+  snap.forEach(item=>{
+    const data=item.data()||{};
+    if(data.person===person&&data.fid)out.push(String(data.fid));
+  });
+  return [...new Set(out)];
+}
+
+async function notifyOther({kind='general',title='Pirulín!',body='Tenés una novedad en Pirulín.',url=''}={}){
+  const s=state();if(!s?.user||!s?.person)return{ok:false,reason:'not-signed-in'};
+  try{
+    const fids=await recipientFids();
+    if(!fids.length){
+      console.info(`Pirulín: ${otherPerson()} todavía no registró ningún dispositivo para push.`);
+      return{ok:false,reason:'no-recipient-device'};
+    }
+    const results=await Promise.allSettled(fids.map(async fid=>{
+      const response=await fetch(NOTIFY_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({token:fid,titulo:title,mensaje:body,kind,url})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||data?.ok===false)throw new Error(data?.error||`HTTP ${response.status}`);
+      return data;
+    }));
+    const sent=results.filter(x=>x.status==='fulfilled').length;
+    results.filter(x=>x.status==='rejected').forEach(x=>console.warn('Pirulín push',x.reason));
+    return{ok:sent>0,sent,total:fids.length};
+  }catch(e){
+    console.error('Pirulín notify other',e);
+    return{ok:false,error:e};
+  }
+}
+
 function openHashDestination(){
   const hash=location.hash;if(!hash||hash===routedHash||!state()?.user)return;
   const buttonId={'#gastos':'openGastosApp','#tareas':'openTasksApp','#comidas':'openComidasApp'}[hash];
@@ -80,4 +120,4 @@ window.addEventListener('pirulin-auth-changed',e=>{if(e.detail?.signedIn)setTime
 window.addEventListener('hashchange',openHashDestination);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 setTimeout(sync,220);
-window.PirulinNotifications={sync,register:ensurePushRegistration};
+window.PirulinNotifications={sync,register:ensurePushRegistration,notifyOther,recipientFids};

@@ -93,23 +93,30 @@ function normalizeSettlement(input={}){
     updatedAtClient:Date.now()
   };
 }
-function notifyNewExpense(expense){
-  if(!window.PirulinNotifications?.notifyOther)return;
+async function notifyNewExpense(expense){
+  if(!window.PirulinNotifications?.notifyOther)return{ok:false,reason:'notifications-not-ready'};
   const who=window.PirulinFirebase?.person||'Alguien';
   const amount=expense.amountPending===true?'monto pendiente':`$${Math.round(Number(expense.amount||0)).toLocaleString('es-AR')}`;
   const label=expense.desc||expense.cat||'gasto';
-  window.PirulinNotifications.notifyOther({
+  return window.PirulinNotifications.notifyOther({
     kind:'expenses',
     title:'Pirulín! · Gastos',
     body:`${who} agregó ${label} · ${amount}`,
     url:'#gastos'
-  }).catch?.(()=>{});
+  });
 }
 async function saveExpense(input){
   const isNew=!input?.id;
   const n=normalizeExpense(input),ref=doc(items(),n.id);
   await setDoc(ref,{...n,date:timestamp(n.date),updatedAt:serverTimestamp(),createdAt:input.createdAt||serverTimestamp()},{merge:true});
-  if(isNew)notifyNewExpense(n);
+  if(isNew){
+    try{
+      const push=await notifyNewExpense(n);
+      if(!push?.ok)console.warn('Pirulín: gasto guardado pero push no enviado',push);
+    }catch(error){
+      console.warn('Pirulín: gasto guardado pero falló el push',error);
+    }
+  }
   return n;
 }
 async function saveSettlement(input){

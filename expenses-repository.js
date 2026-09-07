@@ -108,7 +108,9 @@ async function notifyNewExpense(expense){
 async function saveExpense(input){
   const isNew=!input?.id;
   const n=normalizeExpense(input),ref=doc(items(),n.id);
-  await setDoc(ref,{...n,date:timestamp(n.date),updatedAt:serverTimestamp(),createdAt:input.createdAt||serverTimestamp()},{merge:true});
+  const payload={...n,date:timestamp(n.date),updatedAt:serverTimestamp()};
+  if(isNew)payload.createdAt=serverTimestamp();
+  await setDoc(ref,payload,{merge:true});
   if(isNew){
     try{
       const push=await notifyNewExpense(n);
@@ -121,14 +123,22 @@ async function saveExpense(input){
 }
 async function saveSettlement(input){
   const n=normalizeSettlement(input),ref=doc(items(),n.id);
-  await setDoc(ref,{...n,date:timestamp(n.date),updatedAt:serverTimestamp(),createdAt:input.createdAt||serverTimestamp()},{merge:true});
+  await setDoc(ref,{...n,date:timestamp(n.date),updatedAt:serverTimestamp(),createdAt:serverTimestamp()},{merge:true});
   return n;
 }
 async function deleteItem(id){await deleteDoc(doc(items(),String(id)))}
+function registrationTime(item){
+  const created=item?.createdAt;
+  if(typeof created?.toMillis==='function')return created.toMillis();
+  if(created instanceof Date)return created.getTime();
+  const idMatch=String(item?.id||'').match(/^(?:expense|settlement)-(\d{10,})-/);
+  if(idMatch)return Number(idMatch[1])||0;
+  return Number(item?.updatedAtClient)||0;
+}
 function subscribe({onChange,onError}={}){
   return onSnapshot(items(),snap=>{
     const out=[];snap.forEach(d=>{const x=d.data();out.push({...x,id:d.id,date:toDate(x.date)})});
-    out.sort((a,b)=>b.date-a.date||(Number(b.updatedAtClient)||0)-(Number(a.updatedAtClient)||0));
+    out.sort((a,b)=>registrationTime(b)-registrationTime(a)||String(b.id).localeCompare(String(a.id)));
     onChange?.(out);
   },e=>onError?.(e));
 }

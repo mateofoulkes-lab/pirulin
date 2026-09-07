@@ -84,8 +84,12 @@ function splitBarForCard(card){
     split.innerHTML=`
       <div class="standalone-splitbar">
         <div class="standalone-split-segments">
-          <div class="standalone-split-segment mateo"><span class="standalone-split-amount"></span></div>
-          <div class="standalone-split-segment dani"><span class="standalone-split-amount"></span></div>
+          <div class="standalone-split-segment mateo"></div>
+          <div class="standalone-split-segment dani"></div>
+          <div class="standalone-split-amounts">
+            <span class="mateo-amount"></span>
+            <span class="dani-amount"></span>
+          </div>
         </div>
         <div class="standalone-split-labels">
           <span class="mateo-label"></span>
@@ -97,8 +101,8 @@ function splitBarForCard(card){
 
   const mateo=bar.querySelector('.standalone-split-segment.mateo');
   const dani=bar.querySelector('.standalone-split-segment.dani');
-  const mateoAmount=mateo.querySelector('.standalone-split-amount');
-  const daniAmount=dani.querySelector('.standalone-split-amount');
+  const mateoAmount=bar.querySelector('.mateo-amount');
+  const daniAmount=bar.querySelector('.dani-amount');
   const mateoLabel=bar.querySelector('.mateo-label');
   const daniLabel=bar.querySelector('.dani-label');
 
@@ -109,8 +113,6 @@ function splitBarForCard(card){
   mateoLabel.textContent=showPercent?`Mateo · ${Math.round(Number(item.splitPercentA ?? pctA)*100)/100}%`:'Mateo';
   daniLabel.textContent=showPercent?`Dani · ${Math.round(Number(item.splitPercentB ?? pctB)*100)/100}%`:'Dani';
 
-  mateo.classList.toggle('tiny',pctA<18);
-  dani.classList.toggle('tiny',pctB<18);
   return split;
 }
 

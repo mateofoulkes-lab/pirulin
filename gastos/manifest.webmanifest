@@ -1,0 +1,16 @@
+{
+  "id":"./",
+  "name":"Pirulín! Gastos",
+  "short_name":"Gastos",
+  "description":"Gastos compartidos de Pirulín!, en una app independiente.",
+  "lang":"es-AR",
+  "start_url":"./index.html",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#f6f7fa",
+  "theme_color":"#ffffff",
+  "icons":[
+    {"src":"../LOGO PIRULIN.png","sizes":"1254x1254","type":"image/png","purpose":"any"},
+    {"src":"../pirulin-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"maskable"}
+  ]
+}

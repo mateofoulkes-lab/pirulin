@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Pirulín! Gastos</title>
+  <meta name="theme-color" content="#ffffff">
+  <meta name="color-scheme" content="light only">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="../pirulin-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../pirulin-icon.svg">
+  <link rel="stylesheet" href="./standalone.css">
+</head>
+<body>
+  <div id="gastosSuite">
+    <div class="gastos-shell">
+      <header class="gastos-header">
+        <div class="brand">
+          <img src="../pirulin-icon.svg" alt="">
+          <div><span class="brand-kicker">Pirulín!</span><h1>Gastos</h1></div>
+        </div>
+        <div class="header-actions">
+          <span id="deviceModeBadge" class="device-badge" aria-hidden="true"></span>
+          <button class="icon-btn" id="gastosMore" type="button" aria-label="Más opciones">•••</button>
+        </div>
+      </header>
+
+      <main class="gastos-scroll">
+        <section class="expense-toolbar">
+          <div class="expense-month">
+            <strong>Período</strong>
+            <select id="expenseMonthMock" aria-label="Mes"></select>
+          </div>
+        </section>
+
+        <section class="expense-list" id="expenseListMock" aria-live="polite"></section>
+      </main>
+
+      <div class="money-balance">
+        <div class="eyebrow">BALANCE TOTAL</div>
+        <div class="balance-main">Cargando…</div>
+        <div class="balance-sub"></div>
+        <button class="settle-btn" id="openSettleMock" type="button">Quedar a mano</button>
+      </div>
+
+      <button class="gastos-fab" id="addExpenseMock" type="button" aria-label="Agregar gasto">+</button>
+
+      <div class="gastos-menu" id="expenseItemMenuMock">
+        <button data-act="edit" type="button">Editar</button>
+        <button data-act="delete" type="button">Eliminar</button>
+      </div>
+
+      <div class="gastos-menu" id="gastosTopMenuMock">
+        <button id="exportExpensesMock" type="button">Exportar CSV</button>
+        <button id="filterAllMock" type="button">Mostrar todos</button>
+        <button id="filterMateoMock" type="button">Pagó Mateo</button>
+        <button id="filterDaniMock" type="button">Pagó Dani</button>
+        <button id="filterSettleMock" type="button">Solo pagos</button>
+      </div>
+
+      <div class="gastos-modal" id="expenseModalMock">
+        <div class="gastos-sheet">
+          <h2 id="expenseModalMockTitle">Nuevo gasto</h2>
+
+          <div class="gastos-field">
+            <label for="expenseDescMock">Descripción</label>
+            <input id="expenseDescMock" autocomplete="off" placeholder="Ej. Supermercado">
+          </div>
+
+          <div class="gastos-quick-grid">
+            <div class="gastos-field">
+              <label for="expenseAmountMock">Monto</label>
+              <input id="expenseAmountMock" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00">
+            </div>
+            <div class="gastos-field">
+              <label for="expensePayerMock">Pagó</label>
+              <select id="expensePayerMock"><option>Mateo</option><option>Dani</option></select>
+            </div>
+          </div>
+
+          <div class="gastos-field">
+            <label for="expenseCategoryMock">Categoría</label>
+            <input id="expenseCategoryMock" autocomplete="off" placeholder="Categoría">
+          </div>
+
+          <label class="pending-row">
+            <span>Monto pendiente</span>
+            <input id="expensePendingMock" type="checkbox">
+          </label>
+
+          <div class="split-choice" id="splitChoiceMock">
+            <button class="active" data-split="Mitad y mitad" type="button">Mitad y mitad</button>
+            <button data-split="Por porcentaje" type="button">Por porcentaje</button>
+            <button data-split="Por monto" type="button">Por monto</button>
+          </div>
+
+          <button class="more-fields" id="expenseMoreMock" type="button">Más</button>
+          <div class="expense-advanced" id="expenseAdvancedMock">
+            <div class="gastos-field">
+              <label>Fecha</label>
+              <input type="date">
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn secondary" id="expenseCancelMock" type="button">Cancelar</button>
+            <button class="btn primary" id="expenseSaveMock" type="button">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="gastos-modal" id="settleModalMock">
+        <div class="gastos-sheet">
+          <h2>Quedar a mano</h2>
+          <div class="gastos-field"><label>Dirección</label><select></select></div>
+          <div class="gastos-field"><label>Monto</label><input type="number" min="0" step="0.01" inputmode="decimal"></div>
+          <div class="gastos-field"><label>Nota</label><input placeholder="Opcional"></div>
+          <div class="actions">
+            <button class="btn secondary" id="settleCancelMock" type="button">Cancelar</button>
+            <button class="btn primary" id="settleSaveMock" type="button">Registrar pago</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="login" id="login">
+    <div class="login-card">
+      <img src="../pirulin-icon.svg" alt="Pirulín!" class="login-logo">
+      <h2>Pirulín! Gastos</h2>
+      <p>La misma cuenta y los mismos gastos de Pirulín!, en una app independiente.</p>
+      <button class="google" id="googleLogin" type="button"><span>G</span>Continuar con Google</button>
+    </div>
+  </div>
+
+  <div class="toast" id="standaloneToast" role="status" aria-live="polite"></div>
+
+  <script>
+    function say(message){
+      const t=document.getElementById('standaloneToast');
+      if(!t)return;
+      t.textContent=message||'';
+      t.classList.add('show');
+      clearTimeout(window.__gastosToastTimer);
+      window.__gastosToastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+    }
+  </script>
+  <script type="module" src="../firebase-client.js"></script>
+  <script type="module" src="../expenses-repository.js"></script>
+  <script type="module" src="../expenses-live.js"></script>
+  <script type="module" src="../expenses-final-fixes.js"></script>
+  <script type="module" src="../expenses-ui-polish.js"></script>
+  <script type="module" src="../expenses-percent-slider.js"></script>
+  <script type="module" src="../expenses-categories.js"></script>
+  <script type="module" src="../expenses-card-compact.js"></script>
+  <script type="module" src="../expenses-report.js"></script>
+  <script type="module" src="../expenses-report-motion.js"></script>
+  <script type="module" src="./standalone.js"></script>
+</body>
+</html>

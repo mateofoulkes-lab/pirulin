@@ -19,174 +19,84 @@ html,body{margin:0;min-height:100%;background:#f6f7fa;color-scheme:light}body{mi
   body.device-desktop #gastosSuite .gastos-scroll{padding-bottom:18px!important}
   body.device-desktop .expense-list{grid-template-columns:minmax(0,1fr);align-items:start}
   body.device-desktop .expense-card{padding:10px 16px;overflow:hidden}
+
   body.device-desktop .expense-card.standalone-desktop-row{
     display:grid!important;
-    grid-template-columns:minmax(220px,1fr) minmax(420px,540px) 165px 30px;
+    grid-template-columns:minmax(220px,1fr) minmax(460px,560px) 180px 30px;
     align-items:center!important;
-    column-gap:18px!important;
+    gap:18px!important;
     min-height:68px;
     width:100%;
     min-width:0;
   }
+
   body.device-desktop .standalone-expense-left{min-width:0;overflow:hidden}
-  body.device-desktop .standalone-expense-left .expense-title{
-    display:block!important;
-    min-width:0!important;
-    margin:0!important;
-  }
+  body.device-desktop .standalone-expense-left .expense-title{display:block!important;min-width:0!important;margin:0!important}
   body.device-desktop .standalone-expense-left .expense-title strong{
-    display:block;
-    min-width:0;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    font-size:16px!important;
-    line-height:1.12!important;
+    display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:16px!important;line-height:1.12!important
   }
   body.device-desktop .standalone-expense-left .expense-meta{
-    display:flex!important;
-    align-items:center!important;
-    gap:8px!important;
-    flex-wrap:nowrap!important;
-    margin-top:4px!important;
-    width:auto!important;
-    white-space:nowrap!important;
-    font-size:11px!important;
-    line-height:1.15!important;
+    display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;
+    margin-top:4px!important;width:auto!important;white-space:nowrap!important;font-size:11px!important;line-height:1.15!important
   }
-  body.device-desktop .standalone-expense-left .expense-category-inline{
-    font-size:9px!important;
-    line-height:1!important;
-    padding:3px 8px!important;
-  }
+  body.device-desktop .standalone-expense-left .expense-meta .payer-pill{display:none!important}
+  body.device-desktop .standalone-expense-left .expense-category-inline{font-size:9px!important;line-height:1!important;padding:3px 8px!important}
 
-  body.device-desktop .expense-card.standalone-desktop-row .standalone-expense-split{
-    display:block!important;
-    min-width:0!important;
-    width:100%!important;
-    margin:0!important;
-    overflow:visible!important;
+  body.device-desktop .standalone-expense-split{width:100%;min-width:0}
+  body.device-desktop .standalone-expense-split.pending{
+    display:grid;place-items:center;height:28px;border-radius:10px;background:#fff2cb;color:#936a14;
+    font-size:10px;font-weight:900
   }
   body.device-desktop .standalone-splitbar{width:100%;min-width:0}
-  body.device-desktop .standalone-split-segments{
-    position:relative;
-    display:flex;
-    width:100%;
-    height:26px;
-    border-radius:9px;
-    overflow:hidden;
-    background:#eef1f5;
-    box-shadow:inset 0 0 0 1px rgba(35,48,65,.045);
+  body.device-desktop .standalone-split-track{
+    position:relative;display:flex;width:100%;height:28px;border-radius:10px;overflow:hidden;
+    background:#eef1f5;box-shadow:inset 0 0 0 1px rgba(35,48,65,.05)
   }
-  body.device-desktop .standalone-split-segment{
-    position:relative;
-    display:flex;
-    align-items:center;
-    min-width:0;
-    overflow:hidden;
-    transition:width .22s ease;
-  }
-  body.device-desktop .standalone-split-segment.mateo{
-    justify-content:flex-start;
-    background:#dcecff;
-    color:#37689c;
-  }
-  body.device-desktop .standalone-split-segment.dani{
-    justify-content:flex-end;
-    background:#ffe0eb;
-    color:#9b4668;
-  }
+  body.device-desktop .standalone-split-segment{display:block;height:100%;min-width:0}
+  body.device-desktop .standalone-split-segment.mateo{background:#dcecff}
+  body.device-desktop .standalone-split-segment.dani{background:#ffe0eb}
   body.device-desktop .standalone-split-amounts{
-    position:absolute;
-    inset:0;
-    z-index:2;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:0 9px;
-    pointer-events:none;
-    font-size:10.5px;
-    font-weight:950;
-    line-height:26px;
-    white-space:nowrap;
+    position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:space-between;
+    gap:16px;padding:0 10px;pointer-events:none;font-size:10.5px;font-weight:950;white-space:nowrap
   }
   body.device-desktop .standalone-split-amounts .mateo-amount{color:#315f8d;text-align:left}
   body.device-desktop .standalone-split-amounts .dani-amount{color:#93415f;text-align:right}
   body.device-desktop .standalone-split-labels{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    margin-top:3px;
-    padding:0 2px;
-    font-size:9px;
-    font-weight:850;
-    line-height:1;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;
+    margin-top:4px;padding:0 2px;font-size:9px;font-weight:850;line-height:1
   }
   body.device-desktop .standalone-split-labels .mateo-label{color:#5e7895;text-align:left}
   body.device-desktop .standalone-split-labels .dani-label{color:#9a6579;text-align:right}
 
   body.device-desktop .standalone-expense-right{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    justify-content:center;
-    gap:4px;
-    min-width:0;
-    width:100%;
-    white-space:nowrap;
-    overflow:hidden;
+    min-width:0;width:100%;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;
+    gap:4px;white-space:nowrap;overflow:hidden
   }
   body.device-desktop .standalone-expense-right .expense-amount{
-    margin:0!important;
-    padding:0!important;
-    min-width:0!important;
-    width:100%;
-    text-align:right;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    font-size:18px!important;
-    line-height:1.05!important;
+    margin:0!important;padding:0!important;min-width:0!important;width:100%;
+    text-align:right;overflow:hidden;text-overflow:ellipsis;font-size:18px!important;line-height:1.05!important
   }
   body.device-desktop .standalone-expense-right .payer-pill{
-    margin:0!important;
-    max-width:100%;
-    white-space:nowrap!important;
-    flex:0 0 auto!important;
-    font-size:9.5px!important;
-    line-height:1!important;
-    padding:4px 8px!important;
+    display:inline-flex!important;margin:0!important;max-width:100%;white-space:nowrap!important;
+    flex:0 0 auto!important;font-size:9.5px!important;line-height:1!important;padding:4px 8px!important
   }
-  body.device-desktop .standalone-expense-menu{
-    display:grid;
-    place-items:center;
-    min-width:0;
-  }
-  body.device-desktop .standalone-expense-menu .expense-more{
-    margin:0!important;
-    width:30px!important;
-    height:30px!important;
-  }
+
+  body.device-desktop .standalone-expense-menu{display:grid;place-items:center;min-width:0}
+  body.device-desktop .standalone-expense-menu .expense-more{margin:0!important;width:30px!important;height:30px!important}
+
   body.device-desktop #gastosBottomDock{
-    position:sticky!important;
-    bottom:18px!important;
-    left:auto!important;
-    right:auto!important;
-    display:grid!important;
-    grid-template-columns:minmax(0,1fr) 76px!important;
-    max-width:760px!important;
-    margin:18px auto 0!important;
-    padding:0!important;
-    background:transparent!important;
+    position:sticky!important;bottom:18px!important;left:auto!important;right:auto!important;
+    display:grid!important;grid-template-columns:minmax(0,1fr) 76px!important;max-width:760px!important;
+    margin:18px auto 0!important;padding:0!important;background:transparent!important
   }
   body.device-desktop #gastosSuite .gastos-fab{position:relative!important;right:auto!important;bottom:auto!important}
   body.device-desktop .gastos-modal{align-items:center}
   body.device-desktop .expense-toolbar{max-width:360px}
 }
-@media(min-width:700px) and (max-width:1000px){
+@media(min-width:700px) and (max-width:1080px){
   body.device-desktop .expense-card.standalone-desktop-row{
-    grid-template-columns:minmax(180px,1fr) minmax(330px,1.35fr) 145px 30px;
-    column-gap:12px!important;
+    grid-template-columns:minmax(180px,1fr) minmax(340px,1.25fr) 155px 30px;
+    gap:12px!important
   }
 }

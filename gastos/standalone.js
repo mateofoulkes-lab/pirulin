@@ -59,8 +59,63 @@ addEventListener('appinstalled',()=>{
 setTimeout(syncInstallButton,250);
 
 
+
+const standaloneMoney=new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:2});
+function standaloneFmt(value){return standaloneMoney.format(Math.round(Number(value||0)*100)/100)}
+
+function splitBarForCard(card){
+  const split=card.querySelector(':scope > .expense-split, .standalone-expense-split');
+  if(!split)return null;
+
+  const id=card.dataset.expenseId;
+  const item=(window.PirulinExpensesLive?.items||[]).find(x=>x.id===id);
+  if(!item||item.settlement||item.amountPending===true)return split;
+
+  const total=Number(item.amount)||0;
+  const oweA=Number(item.oweA ?? total/2);
+  const oweB=Number(item.oweB ?? Math.max(0,total-oweA));
+  const pctA=total>0?Math.max(0,Math.min(100,oweA/total*100)):50;
+  const pctB=Math.max(0,100-pctA);
+  const showPercent=item.splitType==='percent';
+
+  let bar=split.querySelector('.standalone-splitbar');
+  if(!bar){
+    split.classList.add('standalone-expense-split');
+    split.innerHTML=`
+      <div class="standalone-splitbar">
+        <div class="standalone-split-segments">
+          <div class="standalone-split-segment mateo"><span class="standalone-split-amount"></span></div>
+          <div class="standalone-split-segment dani"><span class="standalone-split-amount"></span></div>
+        </div>
+        <div class="standalone-split-labels">
+          <span class="mateo-label"></span>
+          <span class="dani-label"></span>
+        </div>
+      </div>`;
+    bar=split.querySelector('.standalone-splitbar');
+  }
+
+  const mateo=bar.querySelector('.standalone-split-segment.mateo');
+  const dani=bar.querySelector('.standalone-split-segment.dani');
+  const mateoAmount=mateo.querySelector('.standalone-split-amount');
+  const daniAmount=dani.querySelector('.standalone-split-amount');
+  const mateoLabel=bar.querySelector('.mateo-label');
+  const daniLabel=bar.querySelector('.dani-label');
+
+  mateo.style.width=`${pctA}%`;
+  dani.style.width=`${pctB}%`;
+  mateoAmount.textContent=standaloneFmt(oweA);
+  daniAmount.textContent=standaloneFmt(oweB);
+  mateoLabel.textContent=showPercent?`Mateo · ${Math.round(Number(item.splitPercentA ?? pctA)*100)/100}%`:'Mateo';
+  daniLabel.textContent=showPercent?`Dani · ${Math.round(Number(item.splitPercentB ?? pctB)*100)/100}%`:'Dani';
+
+  mateo.classList.toggle('tiny',pctA<18);
+  dani.classList.toggle('tiny',pctB<18);
+  return split;
+}
+
 function layoutStandaloneExpenseCards(){
-  const desktop=document.body.classList.contains('device-desktop');
+  if(!document.body.classList.contains('device-desktop'))return;
 
   document.querySelectorAll('#expenseListMock .expense-card:not(.settlement-card)').forEach(card=>{
     const top=card.querySelector(':scope > .expense-top');
@@ -68,56 +123,55 @@ function layoutStandaloneExpenseCards(){
     const amount=card.querySelector('.expense-amount');
     const menu=card.querySelector('.expense-more');
     const meta=card.querySelector(':scope > .expense-meta, .standalone-expense-left > .expense-meta');
-    const split=card.querySelector(':scope > .expense-split');
     const payer=card.querySelector('.payer-pill');
+    const split=splitBarForCard(card);
     if(!top||!title||!amount||!menu||!meta||!split||!payer)return;
 
-    if(desktop){
-      let left=card.querySelector(':scope > .standalone-expense-left');
-      let right=card.querySelector(':scope > .standalone-expense-right');
-      let menuWrap=card.querySelector(':scope > .standalone-expense-menu');
+    let left=card.querySelector(':scope > .standalone-expense-left');
+    let right=card.querySelector(':scope > .standalone-expense-right');
+    let menuWrap=card.querySelector(':scope > .standalone-expense-menu');
 
-      if(!left){
-        left=document.createElement('div');
-        left.className='standalone-expense-left';
-        card.insertBefore(left,top);
-      }
-      if(!right){
-        right=document.createElement('div');
-        right.className='standalone-expense-right';
-        card.insertBefore(right,menuWrap||null);
-      }
-      if(!menuWrap){
-        menuWrap=document.createElement('div');
-        menuWrap.className='standalone-expense-menu';
-        card.appendChild(menuWrap);
-      }
-
-      if(title.parentElement!==left)left.appendChild(title);
-      if(meta.parentElement!==left)left.appendChild(meta);
-      if(amount.parentElement!==right)right.appendChild(amount);
-      if(payer.parentElement!==right)right.appendChild(payer);
-      if(menu.parentElement!==menuWrap)menuWrap.appendChild(menu);
-      if(!top.hidden)top.hidden=true;
-      card.classList.add('standalone-desktop-row');
-    }else if(card.classList.contains('standalone-desktop-row')){
-      top.hidden=false;
-      top.append(title,amount,menu);
-      card.insertBefore(meta,split);
-      meta.append(payer);
-      card.querySelector(':scope > .standalone-expense-left')?.remove();
-      card.querySelector(':scope > .standalone-expense-right')?.remove();
-      card.querySelector(':scope > .standalone-expense-menu')?.remove();
-      card.classList.remove('standalone-desktop-row');
+    if(!left){
+      left=document.createElement('div');
+      left.className='standalone-expense-left';
+      card.insertBefore(left,top);
     }
+    if(!right){
+      right=document.createElement('div');
+      right.className='standalone-expense-right';
+      card.appendChild(right);
+    }
+    if(!menuWrap){
+      menuWrap=document.createElement('div');
+      menuWrap.className='standalone-expense-menu';
+      card.appendChild(menuWrap);
+    }
+
+    if(title.parentElement!==left)left.appendChild(title);
+    if(meta.parentElement!==left)left.appendChild(meta);
+    if(amount.parentElement!==right)right.appendChild(amount);
+    if(payer.parentElement!==right)right.appendChild(payer);
+    if(menu.parentElement!==menuWrap)menuWrap.appendChild(menu);
+    if(!top.hidden)top.hidden=true;
+    card.classList.add('standalone-desktop-row');
   });
 }
 
+let standaloneLayoutQueued=false;
+function queueStandaloneExpenseLayout(){
+  if(standaloneLayoutQueued)return;
+  standaloneLayoutQueued=true;
+  requestAnimationFrame(()=>{
+    standaloneLayoutQueued=false;
+    layoutStandaloneExpenseCards();
+  });
+}
 function installStandaloneExpenseCardLayout(){
   const list=document.getElementById('expenseListMock');
   if(!list)return setTimeout(installStandaloneExpenseCardLayout,100);
-  layoutStandaloneExpenseCards();
-  new MutationObserver(()=>queueMicrotask(layoutStandaloneExpenseCards)).observe(list,{childList:true,subtree:true});
-  addEventListener('resize',()=>queueMicrotask(layoutStandaloneExpenseCards),{passive:true});
+  queueStandaloneExpenseLayout();
+  new MutationObserver(queueStandaloneExpenseLayout).observe(list,{childList:true,subtree:true});
+  addEventListener('resize',queueStandaloneExpenseLayout,{passive:true});
+  addEventListener('pirulin-expense-saved',()=>setTimeout(queueStandaloneExpenseLayout,60));
 }
 installStandaloneExpenseCardLayout();

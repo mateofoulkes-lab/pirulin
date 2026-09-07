@@ -93,10 +93,12 @@ function layoutStandaloneExpenseCards(){
         card.appendChild(menuWrap);
       }
 
-      left.append(title,meta);
-      right.append(amount,payer);
-      menuWrap.append(menu);
-      top.hidden=true;
+      if(title.parentElement!==left)left.appendChild(title);
+      if(meta.parentElement!==left)left.appendChild(meta);
+      if(amount.parentElement!==right)right.appendChild(amount);
+      if(payer.parentElement!==right)right.appendChild(payer);
+      if(menu.parentElement!==menuWrap)menuWrap.appendChild(menu);
+      if(!top.hidden)top.hidden=true;
       card.classList.add('standalone-desktop-row');
     }else if(card.classList.contains('standalone-desktop-row')){
       top.hidden=false;

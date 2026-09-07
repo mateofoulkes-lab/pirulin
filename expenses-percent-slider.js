@@ -1,5 +1,5 @@
 const $u=(s,r=document)=>r.querySelector(s);
-const SNAP_VALUES=[0,25,33.33,50,66.66,100];
+const SNAP_VALUES=[0,25,33.33,50,66.67,75,100];
 let rebuilding=false;
 
 const round2=n=>Math.round(Number(n||0)*100)/100;
@@ -44,7 +44,7 @@ function mountUnified(values=null){
   box.innerHTML=`
     <div class="unified-split-layout">
       <div class="unified-slider-pane">
-        <input id="splitUnifiedSlider" class="unified-split-slider" type="range" min="0" max="5" step="1" value="${nearestSnapIndex(v.pA)}" aria-label="Reparto entre Mateo y Dani">
+        <input id="splitUnifiedSlider" class="unified-split-slider" type="range" min="0" max="${SNAP_VALUES.length-1}" step="1" value="${nearestSnapIndex(v.pA)}" aria-label="Reparto entre Mateo y Dani">
         <div class="unified-snap-labels" aria-hidden="true">${SNAP_VALUES.map(x=>`<span>${String(x).replace('.',',')}%</span>`).join('')}</div>
       </div>
       <div class="unified-stack unified-percent-stack">
@@ -67,7 +67,7 @@ function install(){
     #expenseSplitDetails .unified-split-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(76px,.72fr) minmax(88px,.82fr);gap:9px;align-items:center}
     #expenseSplitDetails .unified-slider-pane{min-width:0;padding:8px 0 0}
     #expenseSplitDetails .unified-split-slider{width:100%;height:34px;margin:0;accent-color:#4f96dc}
-    #expenseSplitDetails .unified-snap-labels{display:grid;grid-template-columns:repeat(6,1fr);margin-top:-2px;color:#969eaa;font-size:6.7px;font-weight:850;line-height:1;user-select:none}
+    #expenseSplitDetails .unified-snap-labels{display:grid;grid-template-columns:repeat(${SNAP_VALUES.length},1fr);margin-top:-2px;color:#969eaa;font-size:6.7px;font-weight:850;line-height:1;user-select:none}
     #expenseSplitDetails .unified-snap-labels span{text-align:center;white-space:nowrap}
     #expenseSplitDetails .unified-snap-labels span:first-child{text-align:left}
     #expenseSplitDetails .unified-snap-labels span:last-child{text-align:right}

@@ -69,6 +69,7 @@ html,body{margin:0;min-height:100%;background:#f6f7fa;color-scheme:light}body{mi
   }
   body.device-desktop .standalone-splitbar{width:100%;min-width:0}
   body.device-desktop .standalone-split-segments{
+    position:relative;
     display:flex;
     width:100%;
     height:26px;
@@ -95,18 +96,23 @@ html,body{margin:0;min-height:100%;background:#f6f7fa;color-scheme:light}body{mi
     background:#ffe0eb;
     color:#9b4668;
   }
-  body.device-desktop .standalone-split-amount{
-    display:block;
+  body.device-desktop .standalone-split-amounts{
+    position:absolute;
+    inset:0;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
     padding:0 9px;
+    pointer-events:none;
     font-size:10.5px;
     font-weight:950;
     line-height:26px;
     white-space:nowrap;
   }
-  body.device-desktop .standalone-split-segment.tiny .standalone-split-amount{
-    font-size:9px;
-    padding:0 4px;
-  }
+  body.device-desktop .standalone-split-amounts .mateo-amount{color:#315f8d;text-align:left}
+  body.device-desktop .standalone-split-amounts .dani-amount{color:#93415f;text-align:right}
   body.device-desktop .standalone-split-labels{
     display:flex;
     justify-content:space-between;

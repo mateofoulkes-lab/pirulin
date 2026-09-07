@@ -18,15 +18,17 @@ html,body{margin:0;min-height:100%;background:#f6f7fa;color-scheme:light}body{mi
   body.device-desktop .gastos-shell{max-width:1320px;padding:0 28px 36px}
   body.device-desktop #gastosSuite .gastos-scroll{padding-bottom:18px!important}
   body.device-desktop .expense-list{grid-template-columns:minmax(0,1fr);align-items:start}
-  body.device-desktop .expense-card{padding:10px 16px}
+  body.device-desktop .expense-card{padding:10px 16px;overflow:hidden}
   body.device-desktop .expense-card.standalone-desktop-row{
     display:grid!important;
-    grid-template-columns:minmax(260px,1.2fr) minmax(330px,1fr) max-content 30px;
+    grid-template-columns:minmax(220px,1fr) minmax(420px,540px) 165px 30px;
     align-items:center!important;
     column-gap:18px!important;
-    min-height:62px;
+    min-height:68px;
+    width:100%;
+    min-width:0;
   }
-  body.device-desktop .standalone-expense-left{min-width:0}
+  body.device-desktop .standalone-expense-left{min-width:0;overflow:hidden}
   body.device-desktop .standalone-expense-left .expense-title{
     display:block!important;
     min-width:0!important;
@@ -57,38 +59,99 @@ html,body{margin:0;min-height:100%;background:#f6f7fa;color-scheme:light}body{mi
     line-height:1!important;
     padding:3px 8px!important;
   }
-  body.device-desktop .expense-card.standalone-desktop-row .expense-split{
-    display:flex!important;
-    align-items:center!important;
-    justify-content:flex-start!important;
-    gap:10px!important;
+
+  body.device-desktop .expense-card.standalone-desktop-row .standalone-expense-split{
+    display:block!important;
     min-width:0!important;
+    width:100%!important;
     margin:0!important;
-    white-space:nowrap!important;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    font-size:11px!important;
-    line-height:1.2!important;
+    overflow:visible!important;
   }
+  body.device-desktop .standalone-splitbar{width:100%;min-width:0}
+  body.device-desktop .standalone-split-segments{
+    position:relative;
+    display:flex;
+    width:100%;
+    height:26px;
+    border-radius:9px;
+    overflow:hidden;
+    background:#eef1f5;
+    box-shadow:inset 0 0 0 1px rgba(35,48,65,.045);
+  }
+  body.device-desktop .standalone-split-segment{
+    position:relative;
+    display:flex;
+    align-items:center;
+    min-width:0;
+    overflow:hidden;
+    transition:width .22s ease;
+  }
+  body.device-desktop .standalone-split-segment.mateo{
+    justify-content:flex-start;
+    background:#dcecff;
+    color:#37689c;
+  }
+  body.device-desktop .standalone-split-segment.dani{
+    justify-content:flex-end;
+    background:#ffe0eb;
+    color:#9b4668;
+  }
+  body.device-desktop .standalone-split-amounts{
+    position:absolute;
+    inset:0;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:0 9px;
+    pointer-events:none;
+    font-size:10.5px;
+    font-weight:950;
+    line-height:26px;
+    white-space:nowrap;
+  }
+  body.device-desktop .standalone-split-amounts .mateo-amount{color:#315f8d;text-align:left}
+  body.device-desktop .standalone-split-amounts .dani-amount{color:#93415f;text-align:right}
+  body.device-desktop .standalone-split-labels{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-top:3px;
+    padding:0 2px;
+    font-size:9px;
+    font-weight:850;
+    line-height:1;
+  }
+  body.device-desktop .standalone-split-labels .mateo-label{color:#5e7895;text-align:left}
+  body.device-desktop .standalone-split-labels .dani-label{color:#9a6579;text-align:right}
+
   body.device-desktop .standalone-expense-right{
     display:flex;
     flex-direction:column;
     align-items:flex-end;
     justify-content:center;
     gap:4px;
-    min-width:150px;
+    min-width:0;
+    width:100%;
     white-space:nowrap;
+    overflow:hidden;
   }
   body.device-desktop .standalone-expense-right .expense-amount{
     margin:0!important;
     padding:0!important;
     min-width:0!important;
+    width:100%;
     text-align:right;
+    overflow:hidden;
+    text-overflow:ellipsis;
     font-size:18px!important;
     line-height:1.05!important;
   }
   body.device-desktop .standalone-expense-right .payer-pill{
     margin:0!important;
+    max-width:100%;
     white-space:nowrap!important;
     flex:0 0 auto!important;
     font-size:9.5px!important;
@@ -98,6 +161,7 @@ html,body{margin:0;min-height:100%;background:#f6f7fa;color-scheme:light}body{mi
   body.device-desktop .standalone-expense-menu{
     display:grid;
     place-items:center;
+    min-width:0;
   }
   body.device-desktop .standalone-expense-menu .expense-more{
     margin:0!important;
@@ -119,4 +183,10 @@ html,body{margin:0;min-height:100%;background:#f6f7fa;color-scheme:light}body{mi
   body.device-desktop #gastosSuite .gastos-fab{position:relative!important;right:auto!important;bottom:auto!important}
   body.device-desktop .gastos-modal{align-items:center}
   body.device-desktop .expense-toolbar{max-width:360px}
+}
+@media(min-width:700px) and (max-width:1000px){
+  body.device-desktop .expense-card.standalone-desktop-row{
+    grid-template-columns:minmax(180px,1fr) minmax(330px,1.35fr) 145px 30px;
+    column-gap:12px!important;
+  }
 }

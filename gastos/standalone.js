@@ -57,3 +57,67 @@ addEventListener('appinstalled',()=>{
   try{say('Pirulín! Gastos instalado')}catch{}
 });
 setTimeout(syncInstallButton,250);
+
+
+function layoutStandaloneExpenseCards(){
+  const desktop=document.body.classList.contains('device-desktop');
+
+  document.querySelectorAll('#expenseListMock .expense-card:not(.settlement-card)').forEach(card=>{
+    const top=card.querySelector(':scope > .expense-top');
+    const title=card.querySelector('.expense-title');
+    const amount=card.querySelector('.expense-amount');
+    const menu=card.querySelector('.expense-more');
+    const meta=card.querySelector(':scope > .expense-meta, .standalone-expense-left > .expense-meta');
+    const split=card.querySelector(':scope > .expense-split');
+    const payer=card.querySelector('.payer-pill');
+    if(!top||!title||!amount||!menu||!meta||!split||!payer)return;
+
+    if(desktop){
+      let left=card.querySelector(':scope > .standalone-expense-left');
+      let right=card.querySelector(':scope > .standalone-expense-right');
+      let menuWrap=card.querySelector(':scope > .standalone-expense-menu');
+
+      if(!left){
+        left=document.createElement('div');
+        left.className='standalone-expense-left';
+        card.insertBefore(left,top);
+      }
+      if(!right){
+        right=document.createElement('div');
+        right.className='standalone-expense-right';
+        card.insertBefore(right,menuWrap||null);
+      }
+      if(!menuWrap){
+        menuWrap=document.createElement('div');
+        menuWrap.className='standalone-expense-menu';
+        card.appendChild(menuWrap);
+      }
+
+      if(title.parentElement!==left)left.appendChild(title);
+      if(meta.parentElement!==left)left.appendChild(meta);
+      if(amount.parentElement!==right)right.appendChild(amount);
+      if(payer.parentElement!==right)right.appendChild(payer);
+      if(menu.parentElement!==menuWrap)menuWrap.appendChild(menu);
+      if(!top.hidden)top.hidden=true;
+      card.classList.add('standalone-desktop-row');
+    }else if(card.classList.contains('standalone-desktop-row')){
+      top.hidden=false;
+      top.append(title,amount,menu);
+      card.insertBefore(meta,split);
+      meta.append(payer);
+      card.querySelector(':scope > .standalone-expense-left')?.remove();
+      card.querySelector(':scope > .standalone-expense-right')?.remove();
+      card.querySelector(':scope > .standalone-expense-menu')?.remove();
+      card.classList.remove('standalone-desktop-row');
+    }
+  });
+}
+
+function installStandaloneExpenseCardLayout(){
+  const list=document.getElementById('expenseListMock');
+  if(!list)return setTimeout(installStandaloneExpenseCardLayout,100);
+  layoutStandaloneExpenseCards();
+  new MutationObserver(()=>queueMicrotask(layoutStandaloneExpenseCards)).observe(list,{childList:true,subtree:true});
+  addEventListener('resize',()=>queueMicrotask(layoutStandaloneExpenseCards),{passive:true});
+}
+installStandaloneExpenseCardLayout();

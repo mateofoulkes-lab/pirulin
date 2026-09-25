@@ -1,3 +1,5 @@
+import './comidas-delete-day.js';
+
 function installComidasBack(){
   const b=document.querySelector('#backFromComidas');
   if(!b)return setTimeout(installComidasBack,80);
